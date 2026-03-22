@@ -10,7 +10,12 @@
     "lint": "next lint",
     "format": "prettier --write ."
   },
-  "keywords": ["nextjs", "judging", "google-oauth", "typescript"],
+  "keywords": [
+    "nextjs",
+    "judging",
+    "google-oauth",
+    "typescript"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
@@ -19,6 +24,7 @@
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.2",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
