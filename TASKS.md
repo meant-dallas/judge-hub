@@ -4,25 +4,25 @@ A Next.js judging application with Google authentication, three user personas (A
 
 ## Phase 1: Project Setup & Foundation
 
-- [ ] Initialize Next.js project with TypeScript
-- [ ] Set up project structure (app router recommended)
-- [ ] Configure Tailwind CSS or preferred styling solution
-- [ ] Set up ESLint and Prettier
-- [ ] Create .env.local template with required environment variables
-- [ ] Initialize Git repository (if not already done)
-- [ ] Create README.md with project overview
+- [x] Initialize Next.js project with TypeScript
+- [x] Set up project structure (app router recommended)
+- [x] Configure Tailwind CSS or preferred styling solution
+- [x] Set up ESLint and Prettier
+- [x] Create .env.local template with required environment variables
+- [x] Initialize Git repository (if not already done)
+- [x] Create README.md with project overview
 
 ## Phase 2: Authentication & User Management
 
-- [ ] Set up NextAuth.js for authentication
-- [ ] Configure Google OAuth provider
+- [x] Set up NextAuth.js for authentication
+- [x] Configure Google OAuth provider
 - [ ] Create Google Cloud Console project and OAuth credentials
-- [ ] Set up authentication callbacks and session handling
-- [ ] Create user role management system (Admin, Coordinator, Judge)
-- [ ] Build protected route middleware based on user roles
-- [ ] Create login page with Google Sign-In button
-- [ ] Implement logout functionality
-- [ ] Create user profile page
+- [x] Set up authentication callbacks and session handling
+- [x] Create user role management system (Admin, Coordinator, Judge)
+- [x] Build protected route middleware based on user roles
+- [x] Create login page with Google Sign-In button
+- [x] Implement logout functionality
+- [x] Create user profile page
 
 ## Phase 3: Google Sheets Integration
 
