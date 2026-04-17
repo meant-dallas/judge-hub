@@ -95,6 +95,71 @@ A Next.js judging application with Google authentication, three user personas (A
 - [x] Implement validation (prevent duplicate scoring)
 - [x] Show judging progress/completion status per event
 
+## Phase 7a: Live Judging Session
+
+This phase adds a real-time "live judging" flow driven by the coordinator. The coordinator controls which participant is currently being presented; judges see only that participant and submit scores before advancing.
+
+### Data layer
+- [x] Add `active_participant_id` field to the Events sheet (nullable) — the participant currently being presented
+- [x] Add `setActiveParticipantAction(eventId, participantId | null)` server action (coordinator/admin only)
+- [x] Update `Event` type and `rowToEvent` mapper to include `active_participant_id`
+
+### Coordinator — Participants tab changes
+- [x] Add "Start Event" button on the Participants tab (visible when event is `active` status and no active participant is set); clicking sets the first participant as active and disables adding new participants
+- [x] While an event is live (active participant set), disable the "Add Participant" button with a tooltip explaining the event is in progress
+- [x] Each participant row gets a "Set as Presenting" button; clicking calls `setActiveParticipantAction` to make that participant active
+- [x] When a new participant is set as presenting, the previously active participant's status is automatically updated to `complete`
+- [x] Show a "Presenting" badge (e.g. pulsing green dot) on the currently active participant row
+- [x] Add "End Session" button to clear the active participant and mark the event as `completed`
+
+### Coordinator — Judges tab changes
+- [x] Show a "Scoring Progress" section at the top of the Judges tab displaying the active participant name and how many judges have submitted scores for them
+- [x] Show a per-judge submitted/pending badge next to each judge (updated whenever the page refreshes)
+- [x] Add a "Next Participant" button; it becomes enabled only when all assigned judges have submitted scores for the current participant (or coordinator overrides)
+- [x] Clicking "Next Participant" calls `setActiveParticipantAction` with the next participant in the list (ordered by row position); if no next participant, it ends the session
+
+### Judge interface changes
+- [x] On the judge's event page (`/judge/events/[id]`), show a prominent "Now Presenting" card when there is an active participant, with a "Score Now →" button linking to the scoring form
+- [x] Hide or dim all other participants while a session is live (judges should only score the active participant at a time)
+- [x] After a judge submits scores, show a "Waiting for next participant…" state instead of immediately navigating away — the coordinator controls when to advance
+- [x] When the coordinator advances to the next participant, the judge's event page should reflect the new active participant (page re-render on navigation)
+
+### Notes
+- `active_participant_id` is stored in the Events sheet as an additional column; null/empty means no active participant
+- The "Next Participant" button for coordinators checks all assigned judges have submitted; an override toggle allows advancing anyway
+- Participant ordering for "Next" follows the row order in the Participants sheet for this event
+- No WebSocket/polling required — coordinator and judges navigate pages manually; the active participant state is persisted in Sheets
+
+## Phase 7b: Scoring Criteria Template & Score Cap Enforcement
+
+This phase introduces a standard criteria template for events and tightens score cap enforcement in the judging form so judges cannot enter or submit a score that exceeds the maximum for any criterion.
+
+**Standard criteria template (total 100 points):**
+
+| Criterion | Max Score |
+|-----------|-----------|
+| Introduction | 15 |
+| Knowledge & Depth | 35 |
+| Presentation & Delivery | 35 |
+| Conclusion | 15 |
+
+### Criteria tab — Standard Template
+- [ ] Add a "Use Standard Template" button on the Criteria tab (visible only when the event has no criteria yet)
+- [ ] Clicking it calls a new `applyStandardCriteriaTemplateAction(eventId)` server action that creates the four criteria above in a single operation (admin/coordinator only)
+- [ ] Once criteria exist, hide the button (to avoid duplicates); show it again only if all criteria are deleted
+
+### Score cap enforcement in the judging form
+- [ ] Real-time cap enforcement: as the judge types, if the entered value exceeds `max_score` clamp the input to `max_score` automatically (prevent silent over-entry)
+- [ ] Show a "remaining points" indicator beneath each score input: e.g. `10 / 15 pts` updates live as the judge types; turns amber when within 2 pts of max, green when exactly at max
+- [ ] If the judge manually types a value above `max_score` (e.g. via keyboard past the clamp), show an inline red error on that field immediately — do not wait for the Save Draft / Submit button
+- [ ] Disable "Save Draft" and "Submit Final" buttons if any criterion has a score that exceeds its `max_score` (redundant with clamping but defensive)
+- [ ] Display the total score across all criteria at the bottom of the scoring form, updating in real time (e.g. `Total: 72 / 100`)
+
+### Notes
+- The standard template action should be idempotent (safe to call if criteria already exist — it will skip creation and return without error)
+- Score clamping and the remaining-points indicator are purely client-side (no server change needed)
+- The total score display uses each criterion's raw score (not weighted) for simplicity in the judge-facing form; weighted totals are for the leaderboard
+
 ## Phase 8: Core Features
 
 - [ ] Implement role-based access control (RBAC)

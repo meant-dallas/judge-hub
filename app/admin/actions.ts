@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
-import { createEvent, updateEventStatus } from '@/lib/sheets/events'
+import { createEvent, updateEventStatus, updateActiveParticipant, getEventById } from '@/lib/sheets/events'
 import { createParticipant, updateParticipantStatus, getParticipantsByEvent } from '@/lib/sheets/participants'
 import { createCriterion, deleteCriterion } from '@/lib/sheets/criteria'
 import { upsertUser, setUserStatus } from '@/lib/sheets/users'
@@ -35,6 +35,7 @@ export async function createEventAction(formData: FormData): Promise<{ error?: s
     date,
     status: 'draft',
     created_by: session.user.email!,
+    active_participant_id: '',
   })
 
   revalidatePath('/admin/events')
@@ -97,6 +98,54 @@ export async function updateParticipantStatusAction(
   if (!session?.user || !['admin', 'coordinator'].includes(session.user.role)) return
   await updateParticipantStatus(participantId, status)
   revalidatePath(`/admin/events/${eventId}`)
+}
+
+// ─── Live session ─────────────────────────────────────────────────────────────
+
+export async function setActiveParticipantAction(
+  eventId: string,
+  participantId: string  // '' to clear without ending session
+): Promise<{ error?: string }> {
+  const session = await auth()
+  if (!session?.user || !['admin', 'coordinator'].includes(session.user.role)) {
+    return { error: 'Forbidden' }
+  }
+
+  // Mark the previously active participant as complete
+  const event = await getEventById(eventId)
+  if (event?.active_participant_id && event.active_participant_id !== participantId) {
+    await updateParticipantStatus(event.active_participant_id, 'complete')
+  }
+
+  await updateActiveParticipant(eventId, participantId)
+
+  revalidatePath(`/admin/events/${eventId}`)
+  revalidatePath(`/coordinator/events/${eventId}`)
+  revalidatePath(`/judge/events/${eventId}`)
+  return {}
+}
+
+export async function endSessionAction(eventId: string): Promise<{ error?: string }> {
+  const session = await auth()
+  if (!session?.user || !['admin', 'coordinator'].includes(session.user.role)) {
+    return { error: 'Forbidden' }
+  }
+
+  // Mark last presenting participant as complete
+  const event = await getEventById(eventId)
+  if (event?.active_participant_id) {
+    await updateParticipantStatus(event.active_participant_id, 'complete')
+  }
+
+  await updateActiveParticipant(eventId, '')
+  await updateEventStatus(eventId, 'completed')
+
+  revalidatePath(`/admin/events/${eventId}`)
+  revalidatePath(`/coordinator/events/${eventId}`)
+  revalidatePath(`/judge/events/${eventId}`)
+  revalidatePath('/coordinator/events')
+  revalidatePath('/admin/events')
+  return {}
 }
 
 // ─── Criteria ─────────────────────────────────────────────────────────────────

@@ -21,6 +21,6 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
-  const event = await createEvent({ ...parsed.data, created_by: session.user.email! })
+  const event = await createEvent({ ...parsed.data, created_by: session.user.email!, active_participant_id: '' })
   return NextResponse.json(event, { status: 201 })
 }

@@ -13,6 +13,7 @@ const COL = {
   STATUS: 4,
   CREATED_AT: 5,
   CREATED_BY: 6,
+  ACTIVE_PARTICIPANT_ID: 7,
 }
 
 export async function getAllEvents(): Promise<Event[]> {
@@ -38,6 +39,7 @@ export async function createEvent(
     data.status,
     now,
     data.created_by,
+    '',  // active_participant_id — empty by default
   ])
   cache.invalidate(`sheet:${SHEET_NAMES.EVENTS}`)
   return { ...data, created_at: now }
@@ -52,5 +54,19 @@ export async function updateEventStatus(
 
   const updated = [...result.row]
   updated[COL.STATUS] = status
+  await updateRow(SHEET_NAMES.EVENTS, result.rowIndex, updated)
+}
+
+export async function updateActiveParticipant(
+  eventId: string,
+  participantId: string  // pass '' to clear
+): Promise<void> {
+  const result = await findRowByColumn(SHEET_NAMES.EVENTS, COL.EVENT_ID, eventId)
+  if (!result) throw new SheetsNotFoundError(`Event "${eventId}" not found`)
+
+  const updated = [...result.row]
+  // Pad row if it predates this column
+  while (updated.length <= COL.ACTIVE_PARTICIPANT_ID) updated.push('')
+  updated[COL.ACTIVE_PARTICIPANT_ID] = participantId
   await updateRow(SHEET_NAMES.EVENTS, result.rowIndex, updated)
 }

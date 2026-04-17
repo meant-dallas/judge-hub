@@ -39,6 +39,7 @@ export interface Event {
   status: 'draft' | 'active' | 'completed' | 'archived'
   created_at: string
   created_by: string
+  active_participant_id: string  // '' when no live session
 }
 
 export interface Score {
@@ -115,6 +116,7 @@ export function rowToEvent(row: string[]): Event {
     status: (row[4] ?? 'draft') as Event['status'],
     created_at: row[5] ?? '',
     created_by: row[6] ?? '',
+    active_participant_id: row[7] ?? '',
   }
 }
 

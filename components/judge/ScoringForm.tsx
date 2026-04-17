@@ -17,6 +17,7 @@ export default function ScoringForm({
   participantName,
   eventId,
   isSubmitted,
+  isLiveSession,
 }: {
   criteria: Criterion[]
   existingScores: Score[]
@@ -24,12 +25,14 @@ export default function ScoringForm({
   participantName: string
   eventId: string
   isSubmitted: boolean
+  isLiveSession?: boolean
 }) {
   const router = useRouter()
   const [isPendingDraft, startDraftTransition] = useTransition()
   const [isPendingSubmit, startSubmitTransition] = useTransition()
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [showWaiting, setShowWaiting] = useState(false)
 
   // Initialize state from existing scores
   const [values, setValues] = useState<Record<string, ScoreValue>>(() => {
@@ -90,6 +93,8 @@ export default function ScoringForm({
       const result = await submitScoresAction(participantId, eventId, buildPayload())
       if (result.error) {
         setError(result.error)
+      } else if (isLiveSession) {
+        setShowWaiting(true)
       } else {
         router.push(`/judge/events/${eventId}`)
       }
@@ -97,6 +102,28 @@ export default function ScoringForm({
   }
 
   const isPending = isPendingDraft || isPendingSubmit
+
+  if (showWaiting) {
+    return (
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 p-8 text-center">
+        <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 mx-auto mb-4">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-green-600 dark:text-green-400">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">Scores submitted</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
+          Waiting for the coordinator to advance to the next participant…
+        </p>
+        <a
+          href={`/judge/events/${eventId}`}
+          className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+        >
+          ← Back to event overview
+        </a>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">

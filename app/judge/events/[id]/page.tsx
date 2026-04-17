@@ -61,6 +61,15 @@ export default async function JudgeEventPage({
   const pct = Math.round((submitted / participants.length) * 100)
   const allDone = submitted === participants.length
 
+  // Live session
+  const isSessionLive = event.active_participant_id !== ''
+  const activeParticipant = isSessionLive
+    ? participants.find((p) => p.participant_id === event.active_participant_id) ?? null
+    : null
+  const activeParticipantScored = activeParticipant
+    ? submittedIds.has(activeParticipant.participant_id)
+    : false
+
   return (
     <div className="p-8 max-w-4xl">
       {/* Header */}
@@ -80,6 +89,63 @@ export default async function JudgeEventPage({
           </span>
         )}
       </div>
+
+      {/* Now Presenting card */}
+      {isSessionLive && activeParticipant && (
+        <div className="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-700/50 rounded-xl p-4 mb-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"/>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"/>
+                </span>
+                <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">Now Presenting</p>
+              </div>
+              <p className="text-base font-semibold text-indigo-900 dark:text-indigo-100">{activeParticipant.name}</p>
+              {[activeParticipant.team_name, activeParticipant.category].filter(Boolean).length > 0 && (
+                <p className="text-xs text-indigo-600/70 dark:text-indigo-400/70 mt-0.5">
+                  {[activeParticipant.team_name, activeParticipant.category].filter(Boolean).join(' · ')}
+                </p>
+              )}
+            </div>
+            {activeParticipantScored ? (
+              <div className="shrink-0 flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400 font-medium">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Scores submitted
+              </div>
+            ) : criteria.length > 0 ? (
+              <Link
+                href={`/judge/events/${id}/${activeParticipant.participant_id}`}
+                className="shrink-0 flex items-center gap-1.5 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Score Now
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </Link>
+            ) : (
+              <span className="text-xs text-slate-400 dark:text-slate-500">No criteria set</span>
+            )}
+          </div>
+          {activeParticipantScored && (
+            <p className="text-xs text-indigo-600/70 dark:text-indigo-400/60 mt-2">
+              Waiting for coordinator to advance to the next participant…
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Waiting — session live but between participants */}
+      {isSessionLive && !activeParticipant && (
+        <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 rounded-xl px-4 py-3 mb-6">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Session in progress — waiting for coordinator to select the next participant.
+          </p>
+        </div>
+      )}
 
       {/* Progress */}
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 p-4 mb-6">
@@ -105,14 +171,25 @@ export default async function JudgeEventPage({
         <ul className="divide-y divide-slate-100 dark:divide-slate-700/60">
           {participants.map((p) => {
             const status = getStatus(p.participant_id)
+            const isActive = p.participant_id === event.active_participant_id
+            const isDimmed = isSessionLive && !isActive
+
             return (
-              <li key={p.participant_id}>
+              <li key={p.participant_id} className={isDimmed ? 'opacity-40' : ''}>
                 <Link
                   href={`/judge/events/${id}/${p.participant_id}`}
                   className="flex items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                 >
                   <div>
-                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{p.name}</p>
+                    <div className="flex items-center gap-2">
+                      {isActive && (
+                        <span className="relative flex h-2 w-2 shrink-0">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"/>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"/>
+                        </span>
+                      )}
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{p.name}</p>
+                    </div>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                       {[p.team_name, p.category].filter(Boolean).join(' · ') || 'No details'}
                     </p>

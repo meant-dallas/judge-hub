@@ -1,4 +1,5 @@
 import type { Participant } from '@/types/sheets'
+import SetPresentingButton from './SetPresentingButton'
 
 const PARTICIPANT_STATUS_BADGE: Record<string, string> = {
   pending: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
@@ -11,15 +12,21 @@ export default function ParticipantProgressRow({
   participant,
   submittedCount,
   totalJudges,
+  session,
 }: {
   participant: Participant
   submittedCount: number
   totalJudges: number
+  session?: {
+    eventId: string
+    activeParticipantId: string
+  }
 }) {
   const progressPct = totalJudges > 0 ? Math.round((submittedCount / totalJudges) * 100) : 0
+  const isActive = session ? participant.participant_id === session.activeParticipantId : false
 
   return (
-    <tr className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+    <tr className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${isActive ? 'bg-green-50/60 dark:bg-green-900/10' : ''}`}>
       <td className="px-5 py-3.5">
         <p className="font-medium text-slate-900 dark:text-slate-100">{participant.name}</p>
         {participant.description && (
@@ -50,6 +57,15 @@ export default function ParticipantProgressRow({
           </div>
         )}
       </td>
+      {session && (
+        <td className="px-4 py-3.5 text-right">
+          <SetPresentingButton
+            participantId={participant.participant_id}
+            eventId={session.eventId}
+            isActive={isActive}
+          />
+        </td>
+      )}
     </tr>
   )
 }

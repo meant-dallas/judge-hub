@@ -3,7 +3,13 @@
 import { useRef, useState, useTransition } from 'react'
 import { createParticipantAction } from '@/app/admin/actions'
 
-export default function AddParticipantForm({ eventId }: { eventId: string }) {
+export default function AddParticipantForm({
+  eventId,
+  disabled,
+}: {
+  eventId: string
+  disabled?: boolean
+}) {
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -22,6 +28,21 @@ export default function AddParticipantForm({ eventId }: { eventId: string }) {
         formRef.current?.reset()
       }
     })
+  }
+
+  if (disabled) {
+    return (
+      <button
+        disabled
+        title="Cannot add participants while a live session is running"
+        className="flex items-center gap-2 bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 text-sm font-medium px-4 py-2 rounded-lg cursor-not-allowed opacity-60"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Add Participant
+      </button>
+    )
   }
 
   if (!open) {

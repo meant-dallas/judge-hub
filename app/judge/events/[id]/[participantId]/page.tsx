@@ -39,6 +39,9 @@ export default async function ScoringPage({
   // Submitted = at least one score with is_draft=false
   const isSubmitted = participantScores.some((s) => !s.is_draft)
 
+  // Live session: this participant is currently being presented
+  const isLiveSession = event.active_participant_id === participantId
+
   return (
     <div className="p-8 max-w-3xl">
       {/* Breadcrumb */}
@@ -71,6 +74,7 @@ export default async function ScoringPage({
           participantName={participant.name}
           eventId={id}
           isSubmitted={isSubmitted}
+          isLiveSession={isLiveSession}
         />
       )}
     </div>

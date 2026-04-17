@@ -12,6 +12,7 @@ import DeleteCriterionButton from '@/components/admin/DeleteCriterionButton'
 import EventTabNav from '@/components/shared/EventTabNav'
 import EventJudgesTab from '@/components/admin/EventJudgesTab'
 import ParticipantProgressRow from '@/components/coordinator/ParticipantProgressRow'
+import SessionControls from '@/components/coordinator/SessionControls'
 
 const STATUS_BADGE: Record<string, string> = {
   draft: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
@@ -64,6 +65,22 @@ export default async function CoordinatorEventDetailPage({
     0
   )
 
+  // Live session data
+  const isLive = event.active_participant_id !== ''
+  const activeParticipant = isLive
+    ? participants.find((p) => p.participant_id === event.active_participant_id) ?? null
+    : null
+  const activeParticipantSubmittedCount = activeParticipant
+    ? submissionStatus.get(activeParticipant.participant_id)?.size ?? 0
+    : 0
+  const activeParticipantIndex = activeParticipant
+    ? participants.findIndex((p) => p.participant_id === activeParticipant.participant_id)
+    : -1
+  const nextParticipant =
+    activeParticipantIndex >= 0 && activeParticipantIndex < participants.length - 1
+      ? participants[activeParticipantIndex + 1]
+      : null
+
   const basePath = `/coordinator/events/${id}`
 
   return (
@@ -104,12 +121,21 @@ export default async function CoordinatorEventDetailPage({
       {/* Participants tab */}
       {tab !== 'criteria' && tab !== 'judges' && (
         <section className="space-y-4">
+          {event.status === 'active' && participants.length > 0 && (
+            <SessionControls
+              eventId={event.event_id}
+              isLive={isLive}
+              activeParticipantName={activeParticipant?.name ?? ''}
+              firstParticipantId={participants[0]?.participant_id ?? null}
+            />
+          )}
+
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
               Participants
               <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">{participants.length}</span>
             </h2>
-            <AddParticipantForm eventId={event.event_id} />
+            <AddParticipantForm eventId={event.event_id} disabled={isLive} />
           </div>
 
           {participants.length === 0 ? (
@@ -126,6 +152,7 @@ export default async function CoordinatorEventDetailPage({
                     <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Category</th>
                     <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Status</th>
                     <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Scores</th>
+                    {isLive && <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Session</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
@@ -135,6 +162,7 @@ export default async function CoordinatorEventDetailPage({
                       participant={p}
                       submittedCount={submissionStatus.get(p.participant_id)?.size ?? 0}
                       totalJudges={assignedJudgeEmails.length}
+                      session={isLive ? { eventId: event.event_id, activeParticipantId: event.active_participant_id } : undefined}
                     />
                   ))}
                 </tbody>
@@ -210,6 +238,16 @@ export default async function CoordinatorEventDetailPage({
             assignedJudges={assignedJudges}
             availableJudges={availableJudges}
             eventId={event.event_id}
+            activeParticipant={
+              activeParticipant
+                ? {
+                    participant_id: activeParticipant.participant_id,
+                    name: activeParticipant.name,
+                    submittedJudgeCount: activeParticipantSubmittedCount,
+                    nextParticipantId: nextParticipant?.participant_id ?? null,
+                  }
+                : null
+            }
           />
         </section>
       )}
