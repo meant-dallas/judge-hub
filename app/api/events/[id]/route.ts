@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth'
 import { getEventById, updateEventStatus } from '@/lib/db/events'
 import { getParticipantsByEvent } from '@/lib/db/participants'
 import { getCriteriaByEvent } from '@/lib/db/criteria'
+import { getAssignmentsForJudge } from '@/lib/db/assignments'
 import { UpdateEventStatusSchema } from '@/lib/validation/schemas'
 
 export async function GET(
@@ -16,6 +17,20 @@ export async function GET(
   const { id } = await params
   const event = await getEventById(id)
   if (!event) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // Judges can only access events they are assigned to
+  if (session.user.role === 'judge') {
+    const [assignments, participants] = await Promise.all([
+      getAssignmentsForJudge(session.user.email!),
+      getParticipantsByEvent(id),
+    ])
+    const assignedParticipantIds = new Set(assignments.map((a) => a.participant_id))
+    const isAssigned = participants.some((p) => assignedParticipantIds.has(p.participant_id))
+    if (!isAssigned) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
   return NextResponse.json(event)
 }
 
