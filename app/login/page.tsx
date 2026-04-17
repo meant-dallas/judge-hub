@@ -1,5 +1,6 @@
 import { auth, signIn } from '@/lib/auth'
 import { redirect } from 'next/navigation'
+import Image from 'next/image'
 
 const ROLE_DASHBOARDS: Record<string, string> = {
   admin: '/admin',
@@ -33,12 +34,7 @@ export default async function LoginPage({
 
       {/* Logo mark */}
       <div className="mb-10 flex flex-col items-center gap-3">
-        <div className="w-16 h-16 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-            <path d="M8 24L16 8L24 24" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M10.5 19H21.5" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-          </svg>
-        </div>
+        <Image src="/logo.png" alt="MEANT JudgeHub" width={80} height={80} className="rounded-2xl" />
         <div className="text-center">
           <h1 className="text-xl font-semibold tracking-tight text-slate-800">MEANT JudgeHub</h1>
           <p className="text-sm text-slate-500 mt-0.5">The MEANT Judging Platform</p>

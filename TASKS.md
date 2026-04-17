@@ -26,8 +26,8 @@ A Next.js judging application with Google authentication, three user personas (A
 
 ## Phase 3: Google Sheets Integration
 
-- [ ] Set up Google Sheets API access
-- [ ] Create service account and download credentials
+- [x] Set up Google Sheets API access
+- [x] Create service account and download credentials
 - [x] Set up Google Sheets client library
 - [x] Create API routes for Google Sheets operations (read/write)
 - [x] Design Google Sheets schema for:
