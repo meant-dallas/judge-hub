@@ -28,15 +28,15 @@ A Next.js judging application with Google authentication, three user personas (A
 
 - [ ] Set up Google Sheets API access
 - [ ] Create service account and download credentials
-- [ ] Set up Google Sheets client library
-- [ ] Create API routes for Google Sheets operations (read/write)
-- [ ] Design Google Sheets schema for:
+- [x] Set up Google Sheets client library
+- [x] Create API routes for Google Sheets operations (read/write)
+- [x] Design Google Sheets schema for:
   - Users and roles
   - Judging criteria/rubrics
   - Scores and evaluations
   - Projects/submissions
-- [ ] Implement data validation and error handling
-- [ ] Create helper functions for common Sheets operations
+- [x] Implement data validation and error handling
+- [x] Create helper functions for common Sheets operations
 
 ## Phase 4: Database Schema & Data Models
 
