@@ -2,10 +2,15 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getEventById } from '@/lib/sheets/events'
 import { getParticipantsByEvent } from '@/lib/sheets/participants'
+import { getCriteriaByEvent } from '@/lib/sheets/criteria'
 import { getAllAssignments } from '@/lib/sheets/assignments'
-import { getSubmissionStatusByParticipants } from '@/lib/sheets/scores'
 import { getAllSheetUsers } from '@/lib/sheets/users'
+import { getSubmissionStatusByParticipants } from '@/lib/sheets/scores'
 import AddParticipantForm from '@/components/admin/AddParticipantForm'
+import AddCriterionForm from '@/components/admin/AddCriterionForm'
+import DeleteCriterionButton from '@/components/admin/DeleteCriterionButton'
+import EventTabNav from '@/components/shared/EventTabNav'
+import EventJudgesTab from '@/components/admin/EventJudgesTab'
 import ParticipantProgressRow from '@/components/coordinator/ParticipantProgressRow'
 
 const STATUS_BADGE: Record<string, string> = {
@@ -17,39 +22,49 @@ const STATUS_BADGE: Record<string, string> = {
 
 export default async function CoordinatorEventDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ tab?: string }>
 }) {
   const { id } = await params
+  const { tab = 'participants' } = await searchParams
 
-  const [event, participants, allAssignments, allUsers] = await Promise.all([
+  const [event, participants, criteria, allAssignments, allUsers] = await Promise.all([
     getEventById(id),
     getParticipantsByEvent(id),
+    getCriteriaByEvent(id),
     getAllAssignments(),
     getAllSheetUsers(),
   ])
 
   if (!event) notFound()
 
-  const judges = allUsers.filter((u) => u.role === 'judge' && u.status === 'active')
   const participantIds = participants.map((p) => p.participant_id)
   const submissionStatus = await getSubmissionStatusByParticipants(participantIds)
 
-  // Pre-compute per-participant assignments
-  const assignmentsByParticipant = new Map<string, typeof allAssignments>()
-  for (const a of allAssignments) {
-    if (participantIds.includes(a.participant_id)) {
-      const list = assignmentsByParticipant.get(a.participant_id) ?? []
-      list.push(a)
-      assignmentsByParticipant.set(a.participant_id, list)
-    }
-  }
+  const activeJudges = allUsers.filter((u) => u.role === 'judge' && u.status === 'active')
+  const assignmentsForEvent = allAssignments.filter((a) => participantIds.includes(a.participant_id))
+  const assignedJudgeEmails = [...new Set(assignmentsForEvent.map((a) => a.judge_email.toLowerCase()))]
 
-  const totalAssigned = Array.from(assignmentsByParticipant.values()).reduce((s, a) => s + a.length, 0)
+  const assignedJudges = assignedJudgeEmails.map((email) => {
+    const user = allUsers.find((u) => u.email.toLowerCase() === email)
+    const submittedCount = participantIds.filter(
+      (pid) => submissionStatus.get(pid)?.has(email)
+    ).length
+    return { email, name: user?.name ?? '', submittedCount, totalParticipants: participants.length }
+  })
+
+  const availableJudges = activeJudges
+    .filter((j) => !assignedJudgeEmails.includes(j.email.toLowerCase()))
+    .map((j) => ({ email: j.email, name: j.name }))
+
   const totalSubmitted = participants.reduce(
     (s, p) => s + (submissionStatus.get(p.participant_id)?.size ?? 0),
     0
   )
+
+  const basePath = `/coordinator/events/${id}`
 
   return (
     <div className="p-8 max-w-5xl space-y-6">
@@ -64,7 +79,7 @@ export default async function CoordinatorEventDetailPage({
             {event.date}{event.description ? ` · ${event.description}` : ''}
           </p>
         </div>
-        <span className={`text-[10px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full ${STATUS_BADGE[event.status] ?? STATUS_BADGE.draft}`}>
+        <span className={`text-[10px] font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full mt-1 ${STATUS_BADGE[event.status] ?? STATUS_BADGE.draft}`}>
           {event.status}
         </span>
       </div>
@@ -73,7 +88,7 @@ export default async function CoordinatorEventDetailPage({
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: 'Participants', value: participants.length },
-          { label: 'Assignments', value: totalAssigned },
+          { label: 'Judges Assigned', value: assignedJudgeEmails.length },
           { label: 'Scores Submitted', value: totalSubmitted },
         ].map((s) => (
           <div key={s.label} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 px-4 py-3">
@@ -83,51 +98,121 @@ export default async function CoordinatorEventDetailPage({
         ))}
       </div>
 
-      {/* Participants + assignment management */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-            Participants
-            <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">{participants.length}</span>
-          </h2>
-          <AddParticipantForm eventId={event.event_id} />
-        </div>
+      {/* Tabs */}
+      <EventTabNav basePath={basePath} activeTab={tab} />
 
-        {participants.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 py-12 text-center">
-            <p className="text-slate-400 dark:text-slate-500 text-sm">No participants yet. Add the first one above.</p>
+      {/* Participants tab */}
+      {tab !== 'criteria' && tab !== 'judges' && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              Participants
+              <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">{participants.length}</span>
+            </h2>
+            <AddParticipantForm eventId={event.event_id} />
           </div>
-        ) : (
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-700/60">
-                  <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-5 py-3">Name</th>
-                  <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Team</th>
-                  <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Category</th>
-                  <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Status</th>
-                  <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Progress</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
-                {participants.map((participant) => (
-                  <ParticipantProgressRow
-                    key={participant.participant_id}
-                    participant={participant}
-                    assignments={assignmentsByParticipant.get(participant.participant_id) ?? []}
-                    submittedJudges={submissionStatus.get(participant.participant_id) ?? new Set()}
-                    availableJudges={judges}
-                    eventId={event.event_id}
-                  />
-                ))}
-              </tbody>
-            </table>
-            <p className="px-5 py-2.5 text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-700/60">
-              Click a participant row to manage judge assignments
-            </p>
+
+          {participants.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 py-12 text-center">
+              <p className="text-slate-400 dark:text-slate-500 text-sm">No participants yet. Add the first one above.</p>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-700/60">
+                    <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-5 py-3">Name</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Team</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Category</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Status</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Scores</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
+                  {participants.map((p) => (
+                    <ParticipantProgressRow
+                      key={p.participant_id}
+                      participant={p}
+                      submittedCount={submissionStatus.get(p.participant_id)?.size ?? 0}
+                      totalJudges={assignedJudgeEmails.length}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Criteria tab */}
+      {tab === 'criteria' && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              Judging Criteria
+              <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">{criteria.length}</span>
+            </h2>
+            <AddCriterionForm eventId={event.event_id} />
           </div>
-        )}
-      </section>
+
+          {criteria.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 py-12 text-center">
+              <p className="text-slate-400 dark:text-slate-500 text-sm">No criteria yet. Add the first one above.</p>
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-slate-700/60">
+                    <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-5 py-3">Criterion</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Category</th>
+                    <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Max Score</th>
+                    <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Weight</th>
+                    <th className="px-4 py-3 w-10"/>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
+                  {criteria.map((c) => (
+                    <tr key={c.criteria_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      <td className="px-5 py-3.5">
+                        <p className="font-medium text-slate-900 dark:text-slate-100">{c.name}</p>
+                        {c.description && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{c.description}</p>}
+                      </td>
+                      <td className="px-4 py-3.5 text-slate-600 dark:text-slate-400">{c.category || '—'}</td>
+                      <td className="px-4 py-3.5 text-right text-slate-700 dark:text-slate-300">{c.max_score}</td>
+                      <td className="px-4 py-3.5 text-right text-slate-700 dark:text-slate-300">{c.weight}×</td>
+                      <td className="px-4 py-3.5 text-right">
+                        <DeleteCriterionButton criteriaId={c.criteria_id} eventId={event.event_id} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="px-5 py-2.5 border-t border-slate-100 dark:border-slate-700/60 flex justify-between text-xs text-slate-400 dark:text-slate-500">
+                <span>{criteria.length} criteria</span>
+                <span>Max weighted total: {criteria.reduce((s, c) => s + c.max_score * c.weight, 0).toFixed(0)}</span>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Judges tab */}
+      {tab === 'judges' && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              Assigned Judges
+              <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">{assignedJudges.length}</span>
+            </h2>
+          </div>
+          <EventJudgesTab
+            assignedJudges={assignedJudges}
+            availableJudges={availableJudges}
+            eventId={event.event_id}
+          />
+        </section>
+      )}
     </div>
   )
 }

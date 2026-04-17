@@ -60,7 +60,7 @@ A Next.js judging application with Google authentication, three user personas (A
   - Create new events
   - Edit event details (name, date, description)
   - Archive/delete events
-- [ ] Build event sub-pages (admin + coordinator):
+- [x] Build event sub-pages (admin + coordinator):
   - **Participants tab**: add/edit/remove participants (individuals or teams) in an event
   - **Criteria tab**: add/edit/remove judging criteria for an event
   - **Judges tab**: assign/remove judges for an event (from users with Judge role); judges are assigned at the event level and judge all participants
@@ -71,7 +71,7 @@ A Next.js judging application with Google authentication, three user personas (A
 
 - [x] Create coordinator dashboard layout
 - [x] Build event list view (read-only, coordinators cannot create events)
-- [ ] Build event sub-pages (shared with admin):
+- [x] Build event sub-pages (shared with admin):
   - **Participants tab**: add/edit/remove participants within an event
   - **Criteria tab**: add/edit/remove judging criteria for an event
   - **Judges tab**: assign/remove judges for an event (from users with Judge role)
@@ -83,18 +83,17 @@ A Next.js judging application with Google authentication, three user personas (A
 
 ## Phase 7: Judge Interface
 
-- [ ] Create judge dashboard layout
-- [ ] Build assigned events view (events the judge has been assigned to)
-- [ ] Build participants list per event (all participants the judge must score)
-- [ ] Create judging form per participant:
+- [x] Create judge dashboard layout
+- [x] Build assigned events view (events the judge has been assigned to)
+- [x] Build participants list per event (all participants the judge must score)
+- [x] Create judging form per participant:
   - Dynamic criteria based on event
   - Score input fields per criterion
   - Comments/feedback section
   - Save draft functionality
   - Submit final scores
-- [ ] Implement validation (prevent duplicate scoring)
-- [ ] Create judging history view
-- [ ] Show judging progress/completion status per event
+- [x] Implement validation (prevent duplicate scoring)
+- [x] Show judging progress/completion status per event
 
 ## Phase 8: Core Features
 

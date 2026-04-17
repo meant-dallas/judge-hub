@@ -3,8 +3,10 @@
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
 import { createEvent, updateEventStatus } from '@/lib/sheets/events'
-import { createParticipant, updateParticipantStatus } from '@/lib/sheets/participants'
+import { createParticipant, updateParticipantStatus, getParticipantsByEvent } from '@/lib/sheets/participants'
+import { createCriterion, deleteCriterion } from '@/lib/sheets/criteria'
 import { upsertUser, setUserStatus } from '@/lib/sheets/users'
+import { assignJudgeToParticipant, removeAssignment, getAllAssignments } from '@/lib/sheets/assignments'
 import type { Event, Participant } from '@/types/sheets'
 import type { UserRole } from '@/types/index'
 
@@ -95,6 +97,118 @@ export async function updateParticipantStatusAction(
   if (!session?.user || !['admin', 'coordinator'].includes(session.user.role)) return
   await updateParticipantStatus(participantId, status)
   revalidatePath(`/admin/events/${eventId}`)
+}
+
+// ─── Criteria ─────────────────────────────────────────────────────────────────
+
+export async function createCriterionAction(
+  eventId: string,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const session = await auth()
+  if (!session?.user || !['admin', 'coordinator'].includes(session.user.role)) {
+    return { error: 'Forbidden' }
+  }
+
+  const name = formData.get('name')?.toString().trim()
+  const description = formData.get('description')?.toString().trim() ?? ''
+  const category = formData.get('category')?.toString().trim() ?? ''
+  const maxScoreRaw = formData.get('max_score')?.toString()
+  const weightRaw = formData.get('weight')?.toString() ?? '1'
+
+  if (!name) return { error: 'Name is required' }
+
+  const max_score = parseFloat(maxScoreRaw ?? '')
+  const weight = parseFloat(weightRaw)
+
+  if (isNaN(max_score) || max_score <= 0) return { error: 'Max score must be a positive number' }
+  if (isNaN(weight) || weight <= 0) return { error: 'Weight must be a positive number' }
+
+  await createCriterion({
+    criteria_id: generateId('CRIT'),
+    name,
+    description,
+    max_score,
+    weight,
+    category,
+    event_id: eventId,
+  })
+
+  revalidatePath(`/admin/events/${eventId}`)
+  revalidatePath(`/coordinator/events/${eventId}`)
+  return {}
+}
+
+export async function deleteCriterionAction(
+  criteriaId: string,
+  eventId: string
+): Promise<{ error?: string }> {
+  const session = await auth()
+  if (!session?.user || !['admin', 'coordinator'].includes(session.user.role)) {
+    return { error: 'Forbidden' }
+  }
+
+  await deleteCriterion(criteriaId)
+  revalidatePath(`/admin/events/${eventId}`)
+  revalidatePath(`/coordinator/events/${eventId}`)
+  return {}
+}
+
+// ─── Event-level judge assignment ─────────────────────────────────────────────
+
+export async function assignJudgeToEventAction(
+  judgeEmail: string,
+  eventId: string
+): Promise<{ error?: string }> {
+  const session = await auth()
+  if (!session?.user || !['admin', 'coordinator'].includes(session.user.role)) {
+    return { error: 'Forbidden' }
+  }
+
+  const participants = await getParticipantsByEvent(eventId)
+  if (participants.length === 0) return { error: 'No participants in this event' }
+
+  await Promise.all(
+    participants.map((p) =>
+      assignJudgeToParticipant(judgeEmail, p.participant_id, session.user!.email!)
+    )
+  )
+
+  revalidatePath(`/admin/events/${eventId}`)
+  revalidatePath(`/coordinator/events/${eventId}`)
+  revalidatePath('/judge')
+  return {}
+}
+
+export async function removeJudgeFromEventAction(
+  judgeEmail: string,
+  eventId: string
+): Promise<{ error?: string }> {
+  const session = await auth()
+  if (!session?.user || !['admin', 'coordinator'].includes(session.user.role)) {
+    return { error: 'Forbidden' }
+  }
+
+  const [allAssignments, participants] = await Promise.all([
+    getAllAssignments(),
+    getParticipantsByEvent(eventId),
+  ])
+
+  const participantIds = new Set(participants.map((p) => p.participant_id))
+  const toRemove = allAssignments.filter(
+    (a) =>
+      a.judge_email.toLowerCase() === judgeEmail.toLowerCase() &&
+      participantIds.has(a.participant_id)
+  )
+
+  for (const a of toRemove) {
+    await removeAssignment(a.assignment_id)
+  }
+
+  revalidatePath(`/admin/events/${eventId}`)
+  revalidatePath(`/coordinator/events/${eventId}`)
+  revalidatePath('/judge')
+  return {}
 }
 
 // ─── Users ───────────────────────────────────────────────────────────────────
