@@ -9,6 +9,7 @@ import { getSubmissionStatusByParticipants } from '@/lib/sheets/scores'
 import AddParticipantForm from '@/components/admin/AddParticipantForm'
 import AddCriterionForm from '@/components/admin/AddCriterionForm'
 import DeleteCriterionButton from '@/components/admin/DeleteCriterionButton'
+import StandardTemplateButton from '@/components/admin/StandardTemplateButton'
 import EventStatusSelect from '@/components/admin/EventStatusSelect'
 import EventTabNav from '@/components/shared/EventTabNav'
 import EventJudgesTab from '@/components/admin/EventJudgesTab'
@@ -163,7 +164,10 @@ export default async function EventDetailPage({
               Judging Criteria
               <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">{criteria.length}</span>
             </h2>
-            <AddCriterionForm eventId={event.event_id} />
+            <div className="flex items-center gap-2">
+              {criteria.length === 0 && <StandardTemplateButton eventId={event.event_id} />}
+              <AddCriterionForm eventId={event.event_id} />
+            </div>
           </div>
 
           {criteria.length === 0 ? (

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
 import { createEvent, updateEventStatus, updateActiveParticipant, getEventById } from '@/lib/sheets/events'
 import { createParticipant, updateParticipantStatus, getParticipantsByEvent } from '@/lib/sheets/participants'
-import { createCriterion, deleteCriterion } from '@/lib/sheets/criteria'
+import { createCriterion, deleteCriterion, getCriteriaByEvent } from '@/lib/sheets/criteria'
 import { upsertUser, setUserStatus } from '@/lib/sheets/users'
 import { assignJudgeToParticipant, removeAssignment, getAllAssignments } from '@/lib/sheets/assignments'
 import type { Event, Participant } from '@/types/sheets'
@@ -182,6 +182,42 @@ export async function createCriterionAction(
     category,
     event_id: eventId,
   })
+
+  revalidatePath(`/admin/events/${eventId}`)
+  revalidatePath(`/coordinator/events/${eventId}`)
+  return {}
+}
+
+const STANDARD_CRITERIA = [
+  { name: 'Introduction',            description: 'Opening and context-setting',                    max_score: 15 },
+  { name: 'Knowledge & Depth',       description: 'Technical depth and understanding of the subject', max_score: 35 },
+  { name: 'Presentation & Delivery', description: 'Clarity, confidence, and communication skills',   max_score: 35 },
+  { name: 'Conclusion',              description: 'Summary and closing remarks',                      max_score: 15 },
+] as const
+
+export async function applyStandardCriteriaTemplateAction(
+  eventId: string
+): Promise<{ error?: string }> {
+  const session = await auth()
+  if (!session?.user || !['admin', 'coordinator'].includes(session.user.role)) {
+    return { error: 'Forbidden' }
+  }
+
+  // Idempotent: skip if criteria already exist
+  const existing = await getCriteriaByEvent(eventId)
+  if (existing.length > 0) return {}
+
+  for (const t of STANDARD_CRITERIA) {
+    await createCriterion({
+      criteria_id: generateId('CRIT'),
+      name: t.name,
+      description: t.description,
+      max_score: t.max_score,
+      weight: 1,
+      category: '',
+      event_id: eventId,
+    })
+  }
 
   revalidatePath(`/admin/events/${eventId}`)
   revalidatePath(`/coordinator/events/${eventId}`)

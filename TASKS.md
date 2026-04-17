@@ -144,16 +144,16 @@ This phase introduces a standard criteria template for events and tightens score
 | Conclusion | 15 |
 
 ### Criteria tab — Standard Template
-- [ ] Add a "Use Standard Template" button on the Criteria tab (visible only when the event has no criteria yet)
-- [ ] Clicking it calls a new `applyStandardCriteriaTemplateAction(eventId)` server action that creates the four criteria above in a single operation (admin/coordinator only)
-- [ ] Once criteria exist, hide the button (to avoid duplicates); show it again only if all criteria are deleted
+- [x] Add a "Use Standard Template" button on the Criteria tab (visible only when the event has no criteria yet)
+- [x] Clicking it calls a new `applyStandardCriteriaTemplateAction(eventId)` server action that creates the four criteria above in a single operation (admin/coordinator only)
+- [x] Once criteria exist, hide the button (to avoid duplicates); show it again only if all criteria are deleted
 
 ### Score cap enforcement in the judging form
-- [ ] Real-time cap enforcement: as the judge types, if the entered value exceeds `max_score` clamp the input to `max_score` automatically (prevent silent over-entry)
-- [ ] Show a "remaining points" indicator beneath each score input: e.g. `10 / 15 pts` updates live as the judge types; turns amber when within 2 pts of max, green when exactly at max
-- [ ] If the judge manually types a value above `max_score` (e.g. via keyboard past the clamp), show an inline red error on that field immediately — do not wait for the Save Draft / Submit button
-- [ ] Disable "Save Draft" and "Submit Final" buttons if any criterion has a score that exceeds its `max_score` (redundant with clamping but defensive)
-- [ ] Display the total score across all criteria at the bottom of the scoring form, updating in real time (e.g. `Total: 72 / 100`)
+- [x] Real-time cap enforcement: as the judge types, if the entered value exceeds `max_score` clamp the input to `max_score` automatically (prevent silent over-entry)
+- [x] Show a "remaining points" indicator beneath each score input: e.g. `10 / 15 pts` updates live as the judge types; turns amber when within 2 pts of max, green when exactly at max
+- [x] If the judge manually types a value above `max_score` (e.g. via keyboard past the clamp), show an inline red error on that field immediately — do not wait for the Save Draft / Submit button
+- [x] Disable "Save Draft" and "Submit Final" buttons if any criterion has a score that exceeds its `max_score` (redundant with clamping but defensive)
+- [x] Display the total score across all criteria at the bottom of the scoring form, updating in real time (e.g. `Total: 72 / 100`)
 
 ### Notes
 - The standard template action should be idempotent (safe to call if criteria already exist — it will skip creation and return without error)

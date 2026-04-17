@@ -34,7 +34,6 @@ export default function ScoringForm({
   const [error, setError] = useState<string | null>(null)
   const [showWaiting, setShowWaiting] = useState(false)
 
-  // Initialize state from existing scores
   const [values, setValues] = useState<Record<string, ScoreValue>>(() => {
     const init: Record<string, ScoreValue> = {}
     for (const c of criteria) {
@@ -48,6 +47,15 @@ export default function ScoringForm({
   })
 
   function update(criteriaId: string, field: 'score' | 'comments', val: string) {
+    if (field === 'score') {
+      const criterion = criteria.find((c) => c.criteria_id === criteriaId)
+      if (criterion && val !== '') {
+        const num = parseFloat(val)
+        if (!isNaN(num) && num > criterion.max_score) {
+          val = String(criterion.max_score)
+        }
+      }
+    }
     setValues((prev) => ({ ...prev, [criteriaId]: { ...prev[criteriaId], [field]: val } }))
   }
 
@@ -103,6 +111,19 @@ export default function ScoringForm({
 
   const isPending = isPendingDraft || isPendingSubmit
 
+  // Running total
+  const runningTotal = criteria.reduce((sum, c) => {
+    const n = parseFloat(values[c.criteria_id]?.score ?? '')
+    return sum + (isNaN(n) || n < 0 ? 0 : Math.min(n, c.max_score))
+  }, 0)
+  const maxTotal = criteria.reduce((sum, c) => sum + c.max_score, 0)
+
+  // Any score over cap (safety net — clamping should prevent this)
+  const hasAnyOverCap = criteria.some((c) => {
+    const n = parseFloat(values[c.criteria_id]?.score ?? '')
+    return !isNaN(n) && n > c.max_score
+  })
+
   if (showWaiting) {
     return (
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 p-8 text-center">
@@ -148,13 +169,35 @@ export default function ScoringForm({
       {criteria.map((c, i) => {
         const val = values[c.criteria_id] ?? { score: '', comments: '' }
         const scoreNum = parseFloat(val.score)
-        const isValid = !isNaN(scoreNum) && scoreNum >= 0 && scoreNum <= c.max_score
-        const pct = isValid ? (scoreNum / c.max_score) * 100 : 0
+        const hasValue = val.score !== '' && !isNaN(scoreNum)
+        const isOverCap = hasValue && scoreNum > c.max_score
+        const isAtMax = hasValue && scoreNum === c.max_score
+        const isNearMax = hasValue && !isAtMax && scoreNum >= c.max_score - 2
+        const isValid = hasValue && scoreNum >= 0 && scoreNum <= c.max_score
+        const pct = hasValue ? Math.min((scoreNum / c.max_score) * 100, 100) : 0
+
+        // Remaining indicator colour
+        const remainingColor = isOverCap
+          ? 'text-red-600 dark:text-red-400'
+          : isAtMax
+          ? 'text-green-600 dark:text-green-400'
+          : isNearMax
+          ? 'text-amber-600 dark:text-amber-400'
+          : 'text-slate-400 dark:text-slate-500'
+
+        const remaining = c.max_score - (hasValue && !isNaN(scoreNum) ? scoreNum : 0)
 
         return (
-          <div key={c.criteria_id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 p-5">
+          <div
+            key={c.criteria_id}
+            className={`bg-white dark:bg-slate-900 rounded-xl border p-5 transition-colors ${
+              isOverCap
+                ? 'border-red-300 dark:border-red-700'
+                : 'border-slate-200 dark:border-slate-700/60'
+            }`}
+          >
             <div className="flex items-start justify-between mb-3">
-              <div>
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-medium text-slate-400 dark:text-slate-500">{i + 1}</span>
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{c.name}</h3>
@@ -168,7 +211,9 @@ export default function ScoringForm({
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 ml-4">{c.description}</p>
                 )}
               </div>
-              <div className="flex items-center gap-2 shrink-0 ml-4">
+
+              {/* Score input */}
+              <div className="flex items-center gap-1.5 shrink-0 ml-4">
                 <input
                   type="number"
                   min={0}
@@ -178,20 +223,45 @@ export default function ScoringForm({
                   disabled={isSubmitted || isPending}
                   onChange={(e) => update(c.criteria_id, 'score', e.target.value)}
                   placeholder="—"
-                  className="w-16 text-center text-sm font-semibold border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-300 dark:focus:ring-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className={`w-16 text-center text-sm font-semibold border rounded-lg px-2 py-1.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors ${
+                    isOverCap
+                      ? 'border-red-400 dark:border-red-600 focus:ring-red-300 dark:focus:ring-red-700'
+                      : isAtMax
+                      ? 'border-green-400 dark:border-green-600 focus:ring-green-300 dark:focus:ring-green-700'
+                      : 'border-slate-200 dark:border-slate-700 focus:ring-indigo-300 dark:focus:ring-indigo-700'
+                  }`}
                 />
-                <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">/ {c.max_score}</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                  / {c.max_score} pts
+                </span>
               </div>
             </div>
 
-            {/* Score bar */}
-            {val.score !== '' && (
+            {/* Score bar + remaining indicator */}
+            {hasValue && (
               <div className="mb-3 ml-4">
-                <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mb-1">
                   <div
-                    className={`h-full rounded-full transition-all ${isValid ? 'bg-indigo-400' : 'bg-red-400'}`}
-                    style={{ width: `${Math.min(pct, 100)}%` }}
+                    className={`h-full rounded-full transition-all ${
+                      isOverCap ? 'bg-red-400' : isAtMax ? 'bg-green-500' : isNearMax ? 'bg-amber-400' : 'bg-indigo-400'
+                    }`}
+                    style={{ width: `${pct}%` }}
                   />
+                </div>
+                <div className="flex items-center justify-between">
+                  {isOverCap ? (
+                    <span className="text-[11px] font-medium text-red-600 dark:text-red-400">
+                      Exceeds maximum — capped at {c.max_score}
+                    </span>
+                  ) : isAtMax ? (
+                    <span className={`text-[11px] font-medium ${remainingColor}`}>
+                      ✓ At maximum
+                    </span>
+                  ) : hasValue ? (
+                    <span className={`text-[11px] ${remainingColor}`}>
+                      {remaining % 1 === 0 ? remaining : remaining.toFixed(1)} pts remaining
+                    </span>
+                  ) : null}
                 </div>
               </div>
             )}
@@ -209,9 +279,22 @@ export default function ScoringForm({
         )
       })}
 
+      {/* Running total */}
+      {!isSubmitted && criteria.length > 0 && (
+        <div className="flex items-center justify-end">
+          <span className={`text-sm font-semibold tabular-nums ${
+            runningTotal === maxTotal
+              ? 'text-green-600 dark:text-green-400'
+              : 'text-slate-700 dark:text-slate-300'
+          }`}>
+            Total: {runningTotal % 1 === 0 ? runningTotal : runningTotal.toFixed(1)} / {maxTotal}
+          </span>
+        </div>
+      )}
+
       {/* Actions */}
       {!isSubmitted && (
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center justify-between pt-1">
           <div className="text-xs text-slate-400 dark:text-slate-500">
             {savedAt && !isPendingDraft && `Draft saved at ${savedAt}`}
             {isPendingDraft && 'Saving…'}
@@ -219,14 +302,14 @@ export default function ScoringForm({
           <div className="flex items-center gap-3">
             <button
               onClick={handleSaveDraft}
-              disabled={isPending}
+              disabled={isPending || hasAnyOverCap}
               className="text-sm text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
             >
               {isPendingDraft ? 'Saving…' : 'Save Draft'}
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isPending}
+              disabled={isPending || hasAnyOverCap}
               className="text-sm bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium px-5 py-2 rounded-lg transition-colors"
             >
               {isPendingSubmit ? 'Submitting…' : 'Submit Final'}
