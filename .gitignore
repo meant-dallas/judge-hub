@@ -40,6 +40,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# local database
+local.db
+local.db-shm
+local.db-wal
+
 # IDEs
 .vscode/*
 !.vscode/extensions.json

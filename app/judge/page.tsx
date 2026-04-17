@@ -1,10 +1,10 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { getAssignmentsForJudge } from '@/lib/sheets/assignments'
-import { getAllParticipants } from '@/lib/sheets/participants'
-import { getAllEvents } from '@/lib/sheets/events'
-import { getScoresByJudge } from '@/lib/sheets/scores'
+import { getAssignmentsForJudge } from '@/lib/db/assignments'
+import { getAllParticipants } from '@/lib/db/participants'
+import { getAllEvents } from '@/lib/db/events'
+import { getScoresByJudge } from '@/lib/db/scores'
 
 const STATUS_BADGE: Record<string, string> = {
   draft: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',

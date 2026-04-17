@@ -160,6 +160,52 @@ This phase introduces a standard criteria template for events and tightens score
 - Score clamping and the remaining-points indicator are purely client-side (no server change needed)
 - The total score display uses each criterion's raw score (not weighted) for simplicity in the judge-facing form; weighted totals are for the leaderboard
 
+## Phase 7c: Overtime Deduction
+
+This phase adds an optional time-limit configuration at the event level and a per-participant overtime toggle for coordinators. When a participant exceeds their allotted time, the coordinator marks them overtime and a pre-configured deduction is automatically applied to their final score. This feature is entirely coordinator-facing — judges are not involved.
+
+### Data layer
+
+- [x] Add two optional fields to the `Event` type and `rowToEvent` mapper:
+  - `time_limit_minutes: number` — `0` means no time limit is configured for this event
+  - `overtime_deduction: number` — flat points deducted from a participant's total if marked overtime (e.g. `5`)
+  - Both map to new columns in the Events sheet (columns I and J)
+- [x] Add one field to the `Participant` type and `rowToParticipant` mapper:
+  - `overtime: boolean` — `TRUE`/`FALSE` in the Participants sheet (new column after `event_id`)
+- [x] Add `updateEventTimeLimitAction(eventId, timeLimitMinutes, overtimeDeduction)` server action (admin/coordinator only) — updates the two new event columns and revalidates the event detail page
+- [x] Add `setParticipantOvertimeAction(participantId, overtime, eventId)` server action (coordinator/admin only) — updates the participant's `overtime` column and revalidates the coordinator event page
+
+### Criteria tab — Time Limit configuration
+
+- [x] Add a "Time Limit" card at the top of the Criteria tab (above the criteria list), visible to both admin and coordinator
+- [x] The card shows two inline inputs:
+  - **Time limit**: number input in minutes (placeholder "No limit", `0` = disabled)
+  - **Deduction**: number input for points to deduct if overtime (e.g. `5 pts`)
+- [x] Changes are saved via `updateEventTimeLimitAction` with a Save button; show a saved confirmation
+- [x] When `time_limit_minutes` is `0`, the deduction field is hidden and a "No time limit set" label is shown instead
+- [x] The card is read-only if the event status is `completed` or `archived`
+
+### Coordinator — Participants tab changes
+
+- [x] When `event.time_limit_minutes > 0`, show an **Overtime** column in the participants table (rightmost column, after the Scores column)
+- [x] Each row in the Overtime column shows:
+  - A toggle/checkbox for the coordinator to mark the participant as overtime
+  - When toggled on: red "Overtime" badge with the deduction amount shown (e.g. `−5 pts`)
+  - When toggled off: grey "On time" label
+  - Clicking calls `setParticipantOvertimeAction` via a client component
+- [x] When no time limit is configured (`time_limit_minutes === 0`), the Overtime column is hidden entirely
+
+### Coordinator — scoring progress display
+
+- [x] In the summary stats row at the top of the coordinator event detail page, if a time limit is configured show the deduction amount as a footnote: e.g. `Overtime deduction: −5 pts per participant`
+- [x] In the Participants tab, rows where `participant.overtime === true` should have a subtle red tint on the row background (similar to how active participants have a green tint)
+
+### Notes
+- The overtime deduction is a flat deduction from the participant's **total** score across all judges (not per-judge). It applies once regardless of how many judges score the participant.
+- Deduction logic lives in the leaderboard/results computation (Phase 8), not in the scoring form. This phase only stores the flag and displays it to the coordinator.
+- The Events sheet needs two new column headers: `time_limit_minutes` (column I) and `overtime_deduction` (column J). Existing event rows without these columns will default to `0`.
+- The Participants sheet needs one new column header: `overtime` (after `event_id`). Existing rows default to `FALSE`.
+
 ## Phase 8: Core Features
 
 - [ ] Implement role-based access control (RBAC)

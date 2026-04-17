@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { getAllUsers, upsertUser, setUserStatus } from '@/lib/sheets/users'
+import { getAllUsers, upsertUser, setUserStatus } from '@/lib/db/users'
 import { UpsertUserSchema, SetUserStatusSchema } from '@/lib/validation/schemas'
 
 export async function GET() {

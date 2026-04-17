@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { getAllEvents, createEvent } from '@/lib/sheets/events'
+import { getAllEvents, createEvent } from '@/lib/db/events'
 import { CreateEventSchema } from '@/lib/validation/schemas'
 
 export async function GET() {
@@ -21,6 +21,6 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
-  const event = await createEvent({ ...parsed.data, created_by: session.user.email!, active_participant_id: '' })
+  const event = await createEvent({ ...parsed.data, created_by: session.user.email!, active_participant_id: '', time_limit_minutes: 0, overtime_deduction: 0 })
   return NextResponse.json(event, { status: 201 })
 }

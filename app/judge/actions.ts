@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
-import { upsertScores, submitScores } from '@/lib/sheets/scores'
+import { upsertScores, submitScores } from '@/lib/db/scores'
 
 export async function saveScoreDraftsAction(
   participantId: string,

@@ -2,11 +2,11 @@
 
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
-import { createEvent, updateEventStatus, updateActiveParticipant, getEventById } from '@/lib/sheets/events'
-import { createParticipant, updateParticipantStatus, getParticipantsByEvent } from '@/lib/sheets/participants'
-import { createCriterion, deleteCriterion, getCriteriaByEvent } from '@/lib/sheets/criteria'
-import { upsertUser, setUserStatus } from '@/lib/sheets/users'
-import { assignJudgeToParticipant, removeAssignment, getAllAssignments } from '@/lib/sheets/assignments'
+import { createEvent, updateEventStatus, updateActiveParticipant, updateEventTimeLimit, getEventById } from '@/lib/db/events'
+import { createParticipant, updateParticipantStatus, updateParticipantOvertime, getParticipantsByEvent } from '@/lib/db/participants'
+import { createCriterion, deleteCriterion, getCriteriaByEvent } from '@/lib/db/criteria'
+import { upsertUser, setUserStatus } from '@/lib/db/users'
+import { assignJudgeToParticipant, removeAssignment, getAllAssignments } from '@/lib/db/assignments'
 import type { Event, Participant } from '@/types/sheets'
 import type { UserRole } from '@/types/index'
 
@@ -36,6 +36,8 @@ export async function createEventAction(formData: FormData): Promise<{ error?: s
     status: 'draft',
     created_by: session.user.email!,
     active_participant_id: '',
+    time_limit_minutes: 0,
+    overtime_deduction: 0,
   })
 
   revalidatePath('/admin/events')
@@ -83,6 +85,7 @@ export async function createParticipantAction(
     contact_email,
     status: 'pending',
     event_id: eventId,
+    overtime: false,
   })
 
   revalidatePath(`/admin/events/${eventId}`)
@@ -145,6 +148,40 @@ export async function endSessionAction(eventId: string): Promise<{ error?: strin
   revalidatePath(`/judge/events/${eventId}`)
   revalidatePath('/coordinator/events')
   revalidatePath('/admin/events')
+  return {}
+}
+
+// ─── Overtime ─────────────────────────────────────────────────────────────────
+
+export async function updateEventTimeLimitAction(
+  eventId: string,
+  timeLimitMinutes: number,
+  overtimeDeduction: number
+): Promise<{ error?: string }> {
+  const session = await auth()
+  if (!session?.user || !['admin', 'coordinator'].includes(session.user.role)) {
+    return { error: 'Forbidden' }
+  }
+
+  await updateEventTimeLimit(eventId, timeLimitMinutes, overtimeDeduction)
+  revalidatePath(`/admin/events/${eventId}`)
+  revalidatePath(`/coordinator/events/${eventId}`)
+  return {}
+}
+
+export async function setParticipantOvertimeAction(
+  participantId: string,
+  overtime: boolean,
+  eventId: string
+): Promise<{ error?: string }> {
+  const session = await auth()
+  if (!session?.user || !['admin', 'coordinator'].includes(session.user.role)) {
+    return { error: 'Forbidden' }
+  }
+
+  await updateParticipantOvertime(participantId, overtime)
+  revalidatePath(`/admin/events/${eventId}`)
+  revalidatePath(`/coordinator/events/${eventId}`)
   return {}
 }
 

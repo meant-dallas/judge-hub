@@ -1,5 +1,6 @@
 import type { Participant } from '@/types/sheets'
 import SetPresentingButton from './SetPresentingButton'
+import OvertimeToggle from './OvertimeToggle'
 
 const PARTICIPANT_STATUS_BADGE: Record<string, string> = {
   pending: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
@@ -13,6 +14,7 @@ export default function ParticipantProgressRow({
   submittedCount,
   totalJudges,
   session,
+  overtimeProps,
 }: {
   participant: Participant
   submittedCount: number
@@ -21,12 +23,21 @@ export default function ParticipantProgressRow({
     eventId: string
     activeParticipantId: string
   }
+  overtimeProps?: {
+    eventId: string
+    overtimeDeduction: number
+  }
 }) {
   const progressPct = totalJudges > 0 ? Math.round((submittedCount / totalJudges) * 100) : 0
   const isActive = session ? participant.participant_id === session.activeParticipantId : false
+  const isOvertime = participant.overtime
+
+  let rowClass = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors'
+  if (isActive) rowClass += ' bg-green-50/60 dark:bg-green-900/10'
+  else if (isOvertime && overtimeProps) rowClass += ' bg-red-50/40 dark:bg-red-900/10'
 
   return (
-    <tr className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${isActive ? 'bg-green-50/60 dark:bg-green-900/10' : ''}`}>
+    <tr className={rowClass}>
       <td className="px-5 py-3.5">
         <p className="font-medium text-slate-900 dark:text-slate-100">{participant.name}</p>
         {participant.description && (
@@ -57,6 +68,16 @@ export default function ParticipantProgressRow({
           </div>
         )}
       </td>
+      {overtimeProps && (
+        <td className="px-4 py-3.5 text-right">
+          <OvertimeToggle
+            participantId={participant.participant_id}
+            eventId={overtimeProps.eventId}
+            isOvertime={isOvertime}
+            overtimeDeduction={overtimeProps.overtimeDeduction}
+          />
+        </td>
+      )}
       {session && (
         <td className="px-4 py-3.5 text-right">
           <SetPresentingButton

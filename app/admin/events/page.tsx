@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { getAllEvents } from '@/lib/sheets/events'
-import { getAllParticipants } from '@/lib/sheets/participants'
+import { getAllEvents } from '@/lib/db/events'
+import { getAllParticipants } from '@/lib/db/participants'
 import CreateEventForm from '@/components/admin/CreateEventForm'
 import EventStatusSelect from '@/components/admin/EventStatusSelect'
 

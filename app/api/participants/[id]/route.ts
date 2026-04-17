@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { getParticipantById, updateParticipantStatus } from '@/lib/sheets/participants'
+import { getParticipantById, updateParticipantStatus } from '@/lib/db/participants'
 import { UpdateParticipantStatusSchema } from '@/lib/validation/schemas'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {

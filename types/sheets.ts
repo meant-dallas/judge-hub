@@ -19,6 +19,7 @@ export interface Participant {
   status: 'pending' | 'active' | 'judging' | 'complete'
   created_at: string
   event_id: string
+  overtime: boolean
 }
 
 export interface Criterion {
@@ -40,6 +41,8 @@ export interface Event {
   created_at: string
   created_by: string
   active_participant_id: string  // '' when no live session
+  time_limit_minutes: number    // 0 = no time limit
+  overtime_deduction: number    // flat pts deducted when participant marked overtime
 }
 
 export interface Score {
@@ -92,6 +95,7 @@ export function rowToParticipant(row: string[]): Participant {
     status: (row[6] ?? 'pending') as Participant['status'],
     created_at: row[7] ?? '',
     event_id: row[8] ?? '',
+    overtime: row[9] === 'TRUE',
   }
 }
 
@@ -117,6 +121,8 @@ export function rowToEvent(row: string[]): Event {
     created_at: row[5] ?? '',
     created_by: row[6] ?? '',
     active_participant_id: row[7] ?? '',
+    time_limit_minutes: parseFloat(row[8] ?? '0') || 0,
+    overtime_deduction: parseFloat(row[9] ?? '0') || 0,
   }
 }
 

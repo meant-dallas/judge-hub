@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
-import { assignJudgeToParticipant, removeAssignment } from '@/lib/sheets/assignments'
+import { assignJudgeToParticipant, removeAssignment } from '@/lib/db/assignments'
 
 export async function assignJudgeAction(
   participantId: string,

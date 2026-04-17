@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { getEventById, updateEventStatus } from '@/lib/sheets/events'
-import { getParticipantsByEvent } from '@/lib/sheets/participants'
-import { getCriteriaByEvent } from '@/lib/sheets/criteria'
+import { getEventById, updateEventStatus } from '@/lib/db/events'
+import { getParticipantsByEvent } from '@/lib/db/participants'
+import { getCriteriaByEvent } from '@/lib/db/criteria'
 import { UpdateEventStatusSchema } from '@/lib/validation/schemas'
 
 export async function GET(

@@ -1,15 +1,16 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getEventById } from '@/lib/sheets/events'
-import { getParticipantsByEvent } from '@/lib/sheets/participants'
-import { getCriteriaByEvent } from '@/lib/sheets/criteria'
-import { getAllAssignments } from '@/lib/sheets/assignments'
-import { getAllSheetUsers } from '@/lib/sheets/users'
-import { getSubmissionStatusByParticipants } from '@/lib/sheets/scores'
+import { getEventById } from '@/lib/db/events'
+import { getParticipantsByEvent } from '@/lib/db/participants'
+import { getCriteriaByEvent } from '@/lib/db/criteria'
+import { getAllAssignments } from '@/lib/db/assignments'
+import { getAllSheetUsers } from '@/lib/db/users'
+import { getSubmissionStatusByParticipants } from '@/lib/db/scores'
 import AddParticipantForm from '@/components/admin/AddParticipantForm'
 import AddCriterionForm from '@/components/admin/AddCriterionForm'
 import DeleteCriterionButton from '@/components/admin/DeleteCriterionButton'
 import StandardTemplateButton from '@/components/admin/StandardTemplateButton'
+import TimeLimitCard from '@/components/admin/TimeLimitCard'
 import EventStatusSelect from '@/components/admin/EventStatusSelect'
 import EventTabNav from '@/components/shared/EventTabNav'
 import EventJudgesTab from '@/components/admin/EventJudgesTab'
@@ -136,6 +137,7 @@ export default async function EventDetailPage({
                     <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Category</th>
                     <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Status</th>
                     <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide px-4 py-3">Scores</th>
+                    {event.time_limit_minutes > 0 && <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Overtime</th>}
                     {isLive && <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Session</th>}
                   </tr>
                 </thead>
@@ -146,6 +148,7 @@ export default async function EventDetailPage({
                       participant={p}
                       submittedCount={submissionStatus.get(p.participant_id)?.size ?? 0}
                       totalJudges={assignedJudgeEmails.length}
+                      overtimeProps={event.time_limit_minutes > 0 ? { eventId: event.event_id, overtimeDeduction: event.overtime_deduction } : undefined}
                       session={isLive ? { eventId: event.event_id, activeParticipantId: event.active_participant_id } : undefined}
                     />
                   ))}
@@ -159,6 +162,13 @@ export default async function EventDetailPage({
       {/* Criteria tab */}
       {tab === 'criteria' && (
         <section className="space-y-4">
+          <TimeLimitCard
+            eventId={event.event_id}
+            timeLimitMinutes={event.time_limit_minutes}
+            overtimeDeduction={event.overtime_deduction}
+            readOnly={event.status === 'completed' || event.status === 'archived'}
+          />
+
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
               Judging Criteria

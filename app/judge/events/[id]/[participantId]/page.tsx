@@ -1,11 +1,11 @@
 import { auth } from '@/lib/auth'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getEventById } from '@/lib/sheets/events'
-import { getParticipantById } from '@/lib/sheets/participants'
-import { getCriteriaByEvent } from '@/lib/sheets/criteria'
-import { getScoresByJudge } from '@/lib/sheets/scores'
-import { getAssignmentsForJudge } from '@/lib/sheets/assignments'
+import { getEventById } from '@/lib/db/events'
+import { getParticipantById } from '@/lib/db/participants'
+import { getCriteriaByEvent } from '@/lib/db/criteria'
+import { getScoresByJudge } from '@/lib/db/scores'
+import { getAssignmentsForJudge } from '@/lib/db/assignments'
 import ScoringForm from '@/components/judge/ScoringForm'
 
 export default async function ScoringPage({

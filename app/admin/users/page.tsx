@@ -1,4 +1,4 @@
-import { getAllSheetUsers } from '@/lib/sheets/users'
+import { getAllSheetUsers } from '@/lib/db/users'
 import AddUserForm from '@/components/admin/AddUserForm'
 import { RoleSelect, StatusToggle } from '@/components/admin/UserActions'
 

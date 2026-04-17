@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import { getAllEvents } from '@/lib/sheets/events'
-import { getAllParticipants } from '@/lib/sheets/participants'
-import { getAllAssignments } from '@/lib/sheets/assignments'
+import { getAllEvents } from '@/lib/db/events'
+import { getAllParticipants } from '@/lib/db/participants'
+import { getAllAssignments } from '@/lib/db/assignments'
 
 const STATUS_BADGE: Record<string, string> = {
   draft: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',

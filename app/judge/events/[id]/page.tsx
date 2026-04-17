@@ -1,11 +1,11 @@
 import { auth } from '@/lib/auth'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getEventById } from '@/lib/sheets/events'
-import { getAssignmentsForJudge } from '@/lib/sheets/assignments'
-import { getAllParticipants } from '@/lib/sheets/participants'
-import { getScoresByJudge } from '@/lib/sheets/scores'
-import { getCriteriaByEvent } from '@/lib/sheets/criteria'
+import { getEventById } from '@/lib/db/events'
+import { getAssignmentsForJudge } from '@/lib/db/assignments'
+import { getAllParticipants } from '@/lib/db/participants'
+import { getScoresByJudge } from '@/lib/db/scores'
+import { getCriteriaByEvent } from '@/lib/db/criteria'
 
 export default async function JudgeEventPage({
   params,

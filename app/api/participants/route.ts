@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { getAllParticipants, createParticipant } from '@/lib/sheets/participants'
+import { getAllParticipants, createParticipant } from '@/lib/db/participants'
 import { CreateParticipantSchema } from '@/lib/validation/schemas'
 
 export async function GET() {
@@ -21,6 +21,6 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
-  const participant = await createParticipant(parsed.data)
+  const participant = await createParticipant({ ...parsed.data, overtime: false })
   return NextResponse.json(participant, { status: 201 })
 }

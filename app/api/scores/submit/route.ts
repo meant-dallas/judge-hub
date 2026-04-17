@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { submitScores } from '@/lib/sheets/scores'
+import { submitScores } from '@/lib/db/scores'
 
 export async function POST(req: Request) {
   const session = await auth()

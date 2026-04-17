@@ -4,7 +4,7 @@ import {
   getAssignmentsForJudge,
   getAssignmentsForParticipant,
   assignJudgeToParticipant,
-} from '@/lib/sheets/assignments'
+} from '@/lib/db/assignments'
 import { AssignJudgeSchema } from '@/lib/validation/schemas'
 
 export async function GET(req: Request) {

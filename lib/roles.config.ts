@@ -1,1 +1,1 @@
-export { getRoleForEmail } from './sheets/users'
+export { getRoleForEmail } from './db/users'

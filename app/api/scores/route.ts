@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { getScoresForParticipant, getScoresByJudge, upsertScore } from '@/lib/sheets/scores'
+import { getScoresForParticipant, getScoresByJudge, upsertScores } from '@/lib/db/scores'
 import { UpsertScoreSchema } from '@/lib/validation/schemas'
 
 export async function GET(req: Request) {
@@ -47,6 +47,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  await upsertScore(parsed.data)
+  await upsertScores([parsed.data])
   return NextResponse.json({ ok: true })
 }
