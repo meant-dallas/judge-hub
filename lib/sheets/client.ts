@@ -35,4 +35,5 @@ export const SHEET_NAMES = {
   CRITERIA: 'Criteria',
   SCORES: 'Scores',
   ASSIGNMENTS: 'Assignments',
+  EVENTS: 'Events',
 } as const

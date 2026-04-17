@@ -5,6 +5,7 @@ import {
   getAssignmentsForProject,
   assignJudgeToProject,
 } from '@/lib/sheets/assignments'
+import { AssignJudgeSchema } from '@/lib/validation/schemas'
 
 export async function GET(req: Request) {
   const session = await auth()
@@ -32,10 +33,14 @@ export async function POST(req: Request) {
   if (!session?.user || !['admin', 'coordinator'].includes(session.user.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
-  const { judgeEmail, projectId } = await req.json() as { judgeEmail: string; projectId: string }
-  if (!judgeEmail || !projectId) {
-    return NextResponse.json({ error: 'judgeEmail and projectId are required' }, { status: 400 })
+  const parsed = AssignJudgeSchema.safeParse(await req.json())
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
-  const assignment = await assignJudgeToProject(judgeEmail, projectId, session.user.email!)
+  const assignment = await assignJudgeToProject(
+    parsed.data.judgeEmail,
+    parsed.data.projectId,
+    session.user.email!
+  )
   return NextResponse.json(assignment, { status: 201 })
 }

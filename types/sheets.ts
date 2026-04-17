@@ -18,6 +18,7 @@ export interface Project {
   contact_email: string
   status: 'pending' | 'active' | 'judging' | 'complete'
   created_at: string
+  event_id: string
 }
 
 export interface Criterion {
@@ -27,6 +28,17 @@ export interface Criterion {
   max_score: number
   weight: number
   category: string
+  event_id: string
+}
+
+export interface Event {
+  event_id: string
+  name: string
+  description: string
+  date: string
+  status: 'draft' | 'active' | 'completed' | 'archived'
+  created_at: string
+  created_by: string
 }
 
 export interface Score {
@@ -78,6 +90,7 @@ export function rowToProject(row: string[]): Project {
     contact_email: row[5] ?? '',
     status: (row[6] ?? 'pending') as Project['status'],
     created_at: row[7] ?? '',
+    event_id: row[8] ?? '',
   }
 }
 
@@ -89,6 +102,19 @@ export function rowToCriterion(row: string[]): Criterion {
     max_score: parseFloat(row[3] ?? '10'),
     weight: parseFloat(row[4] ?? '1'),
     category: row[5] ?? '',
+    event_id: row[6] ?? '',
+  }
+}
+
+export function rowToEvent(row: string[]): Event {
+  return {
+    event_id: row[0] ?? '',
+    name: row[1] ?? '',
+    description: row[2] ?? '',
+    date: row[3] ?? '',
+    status: (row[4] ?? 'draft') as Event['status'],
+    created_at: row[5] ?? '',
+    created_by: row[6] ?? '',
   }
 }
 

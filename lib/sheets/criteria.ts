@@ -28,3 +28,8 @@ export async function getCriteriaById(id: string): Promise<Criterion | null> {
   const all = await getCriteriaAll()
   return all.find((c) => c.criteria_id === id) ?? null
 }
+
+export async function getCriteriaByEvent(eventId: string): Promise<Criterion[]> {
+  const all = await getCriteriaAll()
+  return all.filter((c) => c.event_id === eventId)
+}

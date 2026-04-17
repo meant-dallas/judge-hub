@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { getAllProjects, createProject } from '@/lib/sheets/projects'
-import type { Project } from '@/types/sheets'
+import { CreateProjectSchema } from '@/lib/validation/schemas'
 
 export async function GET() {
   const session = await auth()
@@ -17,10 +17,10 @@ export async function POST(req: Request) {
   if (session?.user?.role !== 'admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
-  const body = await req.json() as Omit<Project, 'created_at'>
-  if (!body.project_id || !body.title) {
-    return NextResponse.json({ error: 'project_id and title are required' }, { status: 400 })
+  const parsed = CreateProjectSchema.safeParse(await req.json())
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
-  const project = await createProject(body)
+  const project = await createProject(parsed.data)
   return NextResponse.json(project, { status: 201 })
 }

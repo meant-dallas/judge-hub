@@ -13,6 +13,7 @@ const COL = {
   CONTACT_EMAIL: 5,
   STATUS: 6,
   CREATED_AT: 7,
+  EVENT_ID: 8,
 }
 
 export async function getAllProjects(): Promise<Project[]> {
@@ -39,8 +40,14 @@ export async function createProject(
     data.contact_email,
     data.status,
     now,
+    data.event_id ?? '',
   ])
   return { ...data, created_at: now }
+}
+
+export async function getProjectsByEvent(eventId: string): Promise<Project[]> {
+  const all = await getAllProjects()
+  return all.filter((p) => p.event_id === eventId)
 }
 
 export async function updateProjectStatus(

@@ -40,13 +40,13 @@ A Next.js judging application with Google authentication, three user personas (A
 
 ## Phase 4: Database Schema & Data Models
 
-- [ ] Define TypeScript interfaces/types for:
+- [x] Define TypeScript interfaces/types for:
   - User (with role)
   - Project/Submission
   - Judging Criteria
   - Score/Evaluation
   - Event/Competition
-- [ ] Create data validation schemas (Zod recommended)
+- [x] Create data validation schemas (Zod recommended)
 - [ ] Set up initial Google Sheets with proper structure
 
 ## Phase 5: Admin Dashboard

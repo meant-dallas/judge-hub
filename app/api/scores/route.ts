@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { getScoresForProject, getScoresByJudge, upsertScore } from '@/lib/sheets/scores'
-import type { Score } from '@/types/sheets'
+import { UpsertScoreSchema } from '@/lib/validation/schemas'
 
 export async function GET(req: Request) {
   const session = await auth()
@@ -13,7 +13,6 @@ export async function GET(req: Request) {
   const judgeEmail = searchParams.get('judgeEmail')
 
   if (projectId) {
-    // Admins/coordinators can view any project's scores; judges only their own
     if (session.user.role === 'judge') {
       const scores = await getScoresByJudge(session.user.email!)
       return NextResponse.json(scores.filter((s) => s.project_id === projectId))
@@ -22,7 +21,6 @@ export async function GET(req: Request) {
   }
 
   if (judgeEmail) {
-    // Judges can only fetch their own scores
     if (session.user.role === 'judge' && session.user.email !== judgeEmail) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
@@ -37,16 +35,18 @@ export async function POST(req: Request) {
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const body = await req.json() as Omit<Score, 'score_id' | 'submitted_at'>
+  const parsed = UpsertScoreSchema.safeParse(await req.json())
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+  }
 
-  // Judges can only submit scores under their own email
   if (
     session.user.role === 'judge' &&
-    body.judge_email?.toLowerCase() !== session.user.email?.toLowerCase()
+    parsed.data.judge_email.toLowerCase() !== session.user.email?.toLowerCase()
   ) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  await upsertScore(body)
+  await upsertScore(parsed.data)
   return NextResponse.json({ ok: true })
 }
