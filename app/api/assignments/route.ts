@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import {
   getAssignmentsForJudge,
-  getAssignmentsForProject,
-  assignJudgeToProject,
+  getAssignmentsForParticipant,
+  assignJudgeToParticipant,
 } from '@/lib/sheets/assignments'
 import { AssignJudgeSchema } from '@/lib/validation/schemas'
 
@@ -14,7 +14,7 @@ export async function GET(req: Request) {
   }
   const { searchParams } = new URL(req.url)
   const judgeEmail = searchParams.get('judgeEmail')
-  const projectId = searchParams.get('projectId')
+  const participantId = searchParams.get('participantId')
 
   if (judgeEmail) {
     if (session.user.role === 'judge' && session.user.email !== judgeEmail) {
@@ -22,10 +22,10 @@ export async function GET(req: Request) {
     }
     return NextResponse.json(await getAssignmentsForJudge(judgeEmail))
   }
-  if (projectId) {
-    return NextResponse.json(await getAssignmentsForProject(projectId))
+  if (participantId) {
+    return NextResponse.json(await getAssignmentsForParticipant(participantId))
   }
-  return NextResponse.json({ error: 'judgeEmail or projectId query param required' }, { status: 400 })
+  return NextResponse.json({ error: 'judgeEmail or participantId query param required' }, { status: 400 })
 }
 
 export async function POST(req: Request) {
@@ -37,9 +37,9 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
-  const assignment = await assignJudgeToProject(
+  const assignment = await assignJudgeToParticipant(
     parsed.data.judgeEmail,
-    parsed.data.projectId,
+    parsed.data.participantId,
     session.user.email!
   )
   return NextResponse.json(assignment, { status: 201 })

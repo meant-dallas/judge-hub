@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { getProjectById, updateProjectStatus } from '@/lib/sheets/projects'
-import type { Project } from '@/types/sheets'
+import { getParticipantById, updateParticipantStatus } from '@/lib/sheets/participants'
+import { UpdateParticipantStatusSchema } from '@/lib/validation/schemas'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
@@ -9,9 +9,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const { id } = await params
-  const project = await getProjectById(id)
-  if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json(project)
+  const participant = await getParticipantById(id)
+  if (!participant) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  return NextResponse.json(participant)
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -20,7 +20,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
   const { id } = await params
-  const { status } = await req.json() as { status: Project['status'] }
-  await updateProjectStatus(id, status)
+  const parsed = UpdateParticipantStatusSchema.safeParse(await req.json())
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
+  }
+  await updateParticipantStatus(id, parsed.data.status)
   return NextResponse.json({ ok: true })
 }

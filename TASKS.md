@@ -1,6 +1,6 @@
 # JudgeHub - Task List
 
-A Next.js judging application with Google authentication, three user personas (Admin, Coordinator, Judge), and Google Sheets backend.
+A Next.js judging application with Google authentication, three user personas (Admin, Coordinator, Judge), and Google Sheets backend. Events are the top-level entity; participants (individuals/teams) are entered into events and judged against criteria.
 
 ## Phase 1: Project Setup & Foundation
 
@@ -34,7 +34,7 @@ A Next.js judging application with Google authentication, three user personas (A
   - Users and roles
   - Judging criteria/rubrics
   - Scores and evaluations
-  - Projects/submissions
+  - Participants (individuals/teams)
 - [x] Implement data validation and error handling
 - [x] Create helper functions for common Sheets operations
 
@@ -42,7 +42,7 @@ A Next.js judging application with Google authentication, three user personas (A
 
 - [x] Define TypeScript interfaces/types for:
   - User (with role)
-  - Project/Submission
+  - Participant (individual/team entered into an event)
   - Judging Criteria
   - Score/Evaluation
   - Event/Competition
@@ -51,33 +51,37 @@ A Next.js judging application with Google authentication, three user personas (A
 
 ## Phase 5: Admin Dashboard
 
-- [ ] Create admin dashboard layout
-- [ ] Build user management interface:
+- [x] Create admin dashboard layout
+- [x] Build user management interface (admin only):
   - View all users
   - Assign/modify user roles
-  - Remove users
-- [ ] Build event/competition management:
-  - Create new competitions
-  - Edit competition details
-  - Set judging criteria
-  - Archive/delete competitions
-- [ ] Build project/submission management:
-  - Add/import projects
-  - Edit project details
-  - Assign judges to projects
+  - Deactivate users
+- [x] Build event management (admin only):
+  - Create new events
+  - Edit event details (name, date, description)
+  - Set judging criteria per event
+  - Archive/delete events
+- [x] Build participant management (admin + coordinator):
+  - Add participants (individual or team) to an event
+  - Edit participant details
+  - Remove participants from an event
+  - Assign judges to participants
 - [ ] Create reports and analytics view
 - [ ] Export functionality (CSV, PDF)
 
 ## Phase 6: Coordinator Interface
 
 - [ ] Create coordinator dashboard layout
+- [ ] Build participant management (shared with admin):
+  - Add/edit participants within an event
+  - Remove participants from an event
 - [ ] Build judge assignment interface:
   - View all judges
-  - Assign judges to specific projects
-  - Track judging progress
-- [ ] Build submission tracking:
-  - View all submissions
-  - Monitor judging status
+  - Assign judges to specific participants
+  - Track judging progress per participant
+- [ ] Build event progress tracking:
+  - View all participants in an event
+  - Monitor judging status per participant
   - Send reminders to judges
 - [ ] Create real-time progress dashboard
 - [ ] Generate interim reports
@@ -85,10 +89,10 @@ A Next.js judging application with Google authentication, three user personas (A
 ## Phase 7: Judge Interface
 
 - [ ] Create judge dashboard layout
-- [ ] Build assigned projects view
+- [ ] Build assigned participants view (filtered by event)
 - [ ] Create judging form:
-  - Dynamic criteria based on competition
-  - Score input fields
+  - Dynamic criteria based on event
+  - Score input fields per criterion
   - Comments/feedback section
   - Save draft functionality
   - Submit final scores

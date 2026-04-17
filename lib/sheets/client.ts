@@ -31,7 +31,7 @@ export const SPREADSHEET_ID = spreadsheetId
 
 export const SHEET_NAMES = {
   USERS: 'Users',
-  PROJECTS: 'Projects',
+  PARTICIPANTS: 'Participants',
   CRITERIA: 'Criteria',
   SCORES: 'Scores',
   ASSIGNMENTS: 'Assignments',

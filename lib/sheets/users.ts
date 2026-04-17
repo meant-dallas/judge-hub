@@ -1,4 +1,5 @@
 import type { UserRole, AppUser } from '@/types'
+import type { SheetUser } from '@/types/sheets'
 import { SHEET_NAMES } from './client'
 import { cache, ROLE_CACHE_TTL_MS } from './cache'
 import { readSheet, appendRow, updateRow, findRowByColumn } from './helpers'
@@ -40,6 +41,11 @@ export async function getAllUsers(): Promise<AppUser[]> {
       image: null,
       role: u.role,
     }))
+}
+
+export async function getAllSheetUsers(): Promise<SheetUser[]> {
+  const rows = await readSheet(SHEET_NAMES.USERS)
+  return rows.filter((r) => r[COL.EMAIL]).map(rowToUser)
 }
 
 export async function upsertUser(data: {

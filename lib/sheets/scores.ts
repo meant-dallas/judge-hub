@@ -3,12 +3,12 @@ import { SHEET_NAMES } from './client'
 import { readSheet, appendRow, findRowByColumn, batchUpdateRows } from './helpers'
 import { rowToScore } from '@/types/sheets'
 import { getAllCriteria } from './criteria'
-import { getAllProjects } from './projects'
+import { getAllParticipants } from './participants'
 
 const COL = {
   SCORE_ID: 0,
   JUDGE_EMAIL: 1,
-  PROJECT_ID: 2,
+  PARTICIPANT_ID: 2,
   CRITERIA_ID: 3,
   SCORE: 4,
   COMMENTS: 5,
@@ -21,9 +21,9 @@ function generateScoreId(): string {
   return `SCORE-${Date.now()}-${rand}`
 }
 
-export async function getScoresForProject(projectId: string): Promise<Score[]> {
+export async function getScoresForParticipant(participantId: string): Promise<Score[]> {
   const rows = await readSheet(SHEET_NAMES.SCORES)
-  return rows.filter((r) => r[COL.PROJECT_ID] === projectId).map(rowToScore)
+  return rows.filter((r) => r[COL.PARTICIPANT_ID] === participantId).map(rowToScore)
 }
 
 export async function getScoresByJudge(judgeEmail: string): Promise<Score[]> {
@@ -40,7 +40,7 @@ export async function upsertScore(
   const existingIndex = rows.findIndex(
     (r) =>
       r[COL.JUDGE_EMAIL]?.toLowerCase() === data.judge_email.toLowerCase() &&
-      r[COL.PROJECT_ID] === data.project_id &&
+      r[COL.PARTICIPANT_ID] === data.participant_id &&
       r[COL.CRITERIA_ID] === data.criteria_id
   )
 
@@ -57,7 +57,7 @@ export async function upsertScore(
     await appendRow(SHEET_NAMES.SCORES, [
       generateScoreId(),
       data.judge_email.toLowerCase(),
-      data.project_id,
+      data.participant_id,
       data.criteria_id,
       String(data.score),
       data.comments,
@@ -80,7 +80,7 @@ export async function upsertScores(
     const existingIndex = rows.findIndex(
       (r) =>
         r[COL.JUDGE_EMAIL]?.toLowerCase() === data.judge_email.toLowerCase() &&
-        r[COL.PROJECT_ID] === data.project_id &&
+        r[COL.PARTICIPANT_ID] === data.participant_id &&
         r[COL.CRITERIA_ID] === data.criteria_id
     )
 
@@ -95,7 +95,7 @@ export async function upsertScores(
       appends.push([
         generateScoreId(),
         data.judge_email.toLowerCase(),
-        data.project_id,
+        data.participant_id,
         data.criteria_id,
         String(data.score),
         data.comments,
@@ -109,14 +109,14 @@ export async function upsertScores(
   for (const row of appends) await appendRow(SHEET_NAMES.SCORES, row)
 }
 
-export async function submitScores(judgeEmail: string, projectId: string): Promise<void> {
+export async function submitScores(judgeEmail: string, participantId: string): Promise<void> {
   const rows = await readSheet(SHEET_NAMES.SCORES)
   const updates: Array<{ rowIndex: number; values: string[] }> = []
 
   rows.forEach((row, i) => {
     if (
       row[COL.JUDGE_EMAIL]?.toLowerCase() === judgeEmail.toLowerCase() &&
-      row[COL.PROJECT_ID] === projectId &&
+      row[COL.PARTICIPANT_ID] === participantId &&
       row[COL.IS_DRAFT] === 'TRUE'
     ) {
       const updated = [...row]
@@ -130,14 +130,14 @@ export async function submitScores(judgeEmail: string, projectId: string): Promi
 }
 
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
-  const [rows, criteria, projects] = await Promise.all([
+  const [rows, criteria, participants] = await Promise.all([
     readSheet(SHEET_NAMES.SCORES),
     getAllCriteria(),
-    getAllProjects(),
+    getAllParticipants(),
   ])
 
   const criteriaMap = new Map(criteria.map((c) => [c.criteria_id, c]))
-  const projectMap = new Map(projects.map((p) => [p.project_id, p]))
+  const participantMap = new Map(participants.map((p) => [p.participant_id, p]))
 
   const totals = new Map<string, { weightedSum: number; judges: Set<string> }>()
 
@@ -148,18 +148,18 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
     const criterion = criteriaMap.get(score.criteria_id)
     if (!criterion) continue
 
-    if (!totals.has(score.project_id)) {
-      totals.set(score.project_id, { weightedSum: 0, judges: new Set() })
+    if (!totals.has(score.participant_id)) {
+      totals.set(score.participant_id, { weightedSum: 0, judges: new Set() })
     }
-    const entry = totals.get(score.project_id)!
+    const entry = totals.get(score.participant_id)!
     entry.weightedSum += score.score * criterion.weight
     entry.judges.add(score.judge_email)
   }
 
   return Array.from(totals.entries())
-    .map(([project_id, { weightedSum, judges }]) => ({
-      project_id,
-      title: projectMap.get(project_id)?.title ?? project_id,
+    .map(([participant_id, { weightedSum, judges }]) => ({
+      participant_id,
+      name: participantMap.get(participant_id)?.name ?? participant_id,
       weighted_score: Math.round(weightedSum * 100) / 100,
       judge_count: judges.size,
     }))

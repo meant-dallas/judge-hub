@@ -9,9 +9,9 @@ export interface SheetUser {
   notes: string
 }
 
-export interface Project {
-  project_id: string
-  title: string
+export interface Participant {
+  participant_id: string
+  name: string
   description: string
   category: string
   team_name: string
@@ -44,7 +44,7 @@ export interface Event {
 export interface Score {
   score_id: string
   judge_email: string
-  project_id: string
+  participant_id: string
   criteria_id: string
   score: number
   comments: string
@@ -55,14 +55,14 @@ export interface Score {
 export interface Assignment {
   assignment_id: string
   judge_email: string
-  project_id: string
+  participant_id: string
   assigned_at: string
   assigned_by: string
 }
 
 export interface LeaderboardEntry {
-  project_id: string
-  title: string
+  participant_id: string
+  name: string
   weighted_score: number
   judge_count: number
 }
@@ -80,15 +80,15 @@ export function rowToUser(row: string[]): SheetUser {
   }
 }
 
-export function rowToProject(row: string[]): Project {
+export function rowToParticipant(row: string[]): Participant {
   return {
-    project_id: row[0] ?? '',
-    title: row[1] ?? '',
+    participant_id: row[0] ?? '',
+    name: row[1] ?? '',
     description: row[2] ?? '',
     category: row[3] ?? '',
     team_name: row[4] ?? '',
     contact_email: row[5] ?? '',
-    status: (row[6] ?? 'pending') as Project['status'],
+    status: (row[6] ?? 'pending') as Participant['status'],
     created_at: row[7] ?? '',
     event_id: row[8] ?? '',
   }
@@ -122,7 +122,7 @@ export function rowToScore(row: string[]): Score {
   return {
     score_id: row[0] ?? '',
     judge_email: row[1] ?? '',
-    project_id: row[2] ?? '',
+    participant_id: row[2] ?? '',
     criteria_id: row[3] ?? '',
     score: parseFloat(row[4] ?? '0'),
     comments: row[5] ?? '',
@@ -135,7 +135,7 @@ export function rowToAssignment(row: string[]): Assignment {
   return {
     assignment_id: row[0] ?? '',
     judge_email: row[1] ?? '',
-    project_id: row[2] ?? '',
+    participant_id: row[2] ?? '',
     assigned_at: row[3] ?? '',
     assigned_by: row[4] ?? '',
   }

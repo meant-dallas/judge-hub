@@ -6,7 +6,7 @@ import { rowToAssignment } from '@/types/sheets'
 const COL = {
   ASSIGNMENT_ID: 0,
   JUDGE_EMAIL: 1,
-  PROJECT_ID: 2,
+  PARTICIPANT_ID: 2,
   ASSIGNED_AT: 3,
   ASSIGNED_BY: 4,
 }
@@ -23,21 +23,21 @@ export async function getAssignmentsForJudge(judgeEmail: string): Promise<Assign
     .map(rowToAssignment)
 }
 
-export async function getAssignmentsForProject(projectId: string): Promise<Assignment[]> {
+export async function getAssignmentsForParticipant(participantId: string): Promise<Assignment[]> {
   const rows = await readSheet(SHEET_NAMES.ASSIGNMENTS)
-  return rows.filter((r) => r[COL.PROJECT_ID] === projectId).map(rowToAssignment)
+  return rows.filter((r) => r[COL.PARTICIPANT_ID] === participantId).map(rowToAssignment)
 }
 
-export async function assignJudgeToProject(
+export async function assignJudgeToParticipant(
   judgeEmail: string,
-  projectId: string,
+  participantId: string,
   assignedBy: string
 ): Promise<Assignment> {
   const rows = await readSheet(SHEET_NAMES.ASSIGNMENTS)
   const duplicate = rows.find(
     (r) =>
       r[COL.JUDGE_EMAIL]?.toLowerCase() === judgeEmail.toLowerCase() &&
-      r[COL.PROJECT_ID] === projectId
+      r[COL.PARTICIPANT_ID] === participantId
   )
   if (duplicate) return rowToAssignment(duplicate)
 
@@ -46,11 +46,11 @@ export async function assignJudgeToProject(
   await appendRow(SHEET_NAMES.ASSIGNMENTS, [
     id,
     judgeEmail.toLowerCase(),
-    projectId,
+    participantId,
     now,
     assignedBy.toLowerCase(),
   ])
-  return { assignment_id: id, judge_email: judgeEmail, project_id: projectId, assigned_at: now, assigned_by: assignedBy }
+  return { assignment_id: id, judge_email: judgeEmail, participant_id: participantId, assigned_at: now, assigned_by: assignedBy }
 }
 
 export async function removeAssignment(assignmentId: string): Promise<void> {

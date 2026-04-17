@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
-import { getScoresForProject, getScoresByJudge, upsertScore } from '@/lib/sheets/scores'
+import { getScoresForParticipant, getScoresByJudge, upsertScore } from '@/lib/sheets/scores'
 import { UpsertScoreSchema } from '@/lib/validation/schemas'
 
 export async function GET(req: Request) {
@@ -9,15 +9,15 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const { searchParams } = new URL(req.url)
-  const projectId = searchParams.get('projectId')
+  const participantId = searchParams.get('participantId')
   const judgeEmail = searchParams.get('judgeEmail')
 
-  if (projectId) {
+  if (participantId) {
     if (session.user.role === 'judge') {
       const scores = await getScoresByJudge(session.user.email!)
-      return NextResponse.json(scores.filter((s) => s.project_id === projectId))
+      return NextResponse.json(scores.filter((s) => s.participant_id === participantId))
     }
-    return NextResponse.json(await getScoresForProject(projectId))
+    return NextResponse.json(await getScoresForParticipant(participantId))
   }
 
   if (judgeEmail) {
@@ -27,7 +27,7 @@ export async function GET(req: Request) {
     return NextResponse.json(await getScoresByJudge(judgeEmail))
   }
 
-  return NextResponse.json({ error: 'projectId or judgeEmail query param required' }, { status: 400 })
+  return NextResponse.json({ error: 'participantId or judgeEmail query param required' }, { status: 400 })
 }
 
 export async function POST(req: Request) {
