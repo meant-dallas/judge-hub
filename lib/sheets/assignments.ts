@@ -16,6 +16,11 @@ function generateAssignmentId(): string {
   return `ASSIGN-${Date.now()}-${rand}`
 }
 
+export async function getAllAssignments(): Promise<Assignment[]> {
+  const rows = await readSheet(SHEET_NAMES.ASSIGNMENTS)
+  return rows.filter((r) => r[COL.ASSIGNMENT_ID]).map(rowToAssignment)
+}
+
 export async function getAssignmentsForJudge(judgeEmail: string): Promise<Assignment[]> {
   const rows = await readSheet(SHEET_NAMES.ASSIGNMENTS)
   return rows

@@ -1,6 +1,6 @@
 # JudgeHub - Task List
 
-A Next.js judging application with Google authentication, three user personas (Admin, Coordinator, Judge), and Google Sheets backend. Events are the top-level entity; participants (individuals/teams) are entered into events and judged against criteria.
+A Next.js judging application with Google authentication, three user personas (Admin, Coordinator, Judge), and Google Sheets backend. Events are the top-level entity with three sub-sections: Participants, Criteria, and Judges. Judges are users with the Judge role and are assigned at the event level (they judge all participants in that event).
 
 ## Phase 1: Project Setup & Foundation
 
@@ -54,43 +54,39 @@ A Next.js judging application with Google authentication, three user personas (A
 - [x] Create admin dashboard layout
 - [x] Build user management interface (admin only):
   - View all users
-  - Assign/modify user roles
+  - Assign/modify user roles (admin, coordinator, judge)
   - Deactivate users
 - [x] Build event management (admin only):
   - Create new events
   - Edit event details (name, date, description)
-  - Set judging criteria per event
   - Archive/delete events
-- [x] Build participant management (admin + coordinator):
-  - Add participants (individual or team) to an event
-  - Edit participant details
-  - Remove participants from an event
-  - Assign judges to participants
+- [ ] Build event sub-pages (admin + coordinator):
+  - **Participants tab**: add/edit/remove participants (individuals or teams) in an event
+  - **Criteria tab**: add/edit/remove judging criteria for an event
+  - **Judges tab**: assign/remove judges for an event (from users with Judge role); judges are assigned at the event level and judge all participants
 - [ ] Create reports and analytics view
 - [ ] Export functionality (CSV, PDF)
 
 ## Phase 6: Coordinator Interface
 
-- [ ] Create coordinator dashboard layout
-- [ ] Build participant management (shared with admin):
-  - Add/edit participants within an event
-  - Remove participants from an event
-- [ ] Build judge assignment interface:
-  - View all judges
-  - Assign judges to specific participants
-  - Track judging progress per participant
-- [ ] Build event progress tracking:
+- [x] Create coordinator dashboard layout
+- [x] Build event list view (read-only, coordinators cannot create events)
+- [ ] Build event sub-pages (shared with admin):
+  - **Participants tab**: add/edit/remove participants within an event
+  - **Criteria tab**: add/edit/remove judging criteria for an event
+  - **Judges tab**: assign/remove judges for an event (from users with Judge role)
+- [x] Build event progress tracking:
   - View all participants in an event
-  - Monitor judging status per participant
-  - Send reminders to judges
+  - Monitor judging status per participant (submitted vs pending per judge)
 - [ ] Create real-time progress dashboard
 - [ ] Generate interim reports
 
 ## Phase 7: Judge Interface
 
 - [ ] Create judge dashboard layout
-- [ ] Build assigned participants view (filtered by event)
-- [ ] Create judging form:
+- [ ] Build assigned events view (events the judge has been assigned to)
+- [ ] Build participants list per event (all participants the judge must score)
+- [ ] Create judging form per participant:
   - Dynamic criteria based on event
   - Score input fields per criterion
   - Comments/feedback section
@@ -98,7 +94,7 @@ A Next.js judging application with Google authentication, three user personas (A
   - Submit final scores
 - [ ] Implement validation (prevent duplicate scoring)
 - [ ] Create judging history view
-- [ ] Show judging progress/completion status
+- [ ] Show judging progress/completion status per event
 
 ## Phase 8: Core Features
 
@@ -164,6 +160,9 @@ A Next.js judging application with Google authentication, three user personas (A
 
 ## Notes
 
+- Events have three sub-sections: Participants, Criteria, and Judges
+- Judges are users with the Judge role; they are assigned at the event level and automatically judge all participants in that event
+- Coordinators can manage Participants, Criteria, and Judges within events but cannot create events
 - Priority should be given to core authentication and role management first
 - Google Sheets integration should be tested thoroughly with rate limiting in mind
 - Consider caching strategies for frequently accessed data

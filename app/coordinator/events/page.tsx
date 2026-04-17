@@ -1,13 +1,18 @@
 import Link from 'next/link'
 import { getAllEvents } from '@/lib/sheets/events'
 import { getAllParticipants } from '@/lib/sheets/participants'
-import CreateEventForm from '@/components/admin/CreateEventForm'
-import EventStatusSelect from '@/components/admin/EventStatusSelect'
 
-export default async function EventsPage() {
+const STATUS_BADGE: Record<string, string> = {
+  draft: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
+  active: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
+  completed: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
+  archived: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400',
+}
+
+export default async function CoordinatorEventsPage() {
   const [events, participants] = await Promise.all([getAllEvents(), getAllParticipants()])
-
   const sorted = [...events].sort((a, b) => b.date.localeCompare(a.date))
+
   const countMap = new Map<string, number>()
   for (const p of participants) {
     countMap.set(p.event_id, (countMap.get(p.event_id) ?? 0) + 1)
@@ -15,17 +20,14 @@ export default async function EventsPage() {
 
   return (
     <div className="p-8 max-w-5xl">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Events</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{events.length} event{events.length !== 1 ? 's' : ''} total</p>
-        </div>
-        <CreateEventForm />
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Events</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{events.length} event{events.length !== 1 ? 's' : ''} total</p>
       </div>
 
       {sorted.length === 0 ? (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 py-16 text-center">
-          <p className="text-slate-400 dark:text-slate-500 text-sm">No events yet. Create your first event above.</p>
+          <p className="text-slate-400 dark:text-slate-500 text-sm">No events have been created yet.</p>
         </div>
       ) : (
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 overflow-hidden">
@@ -55,11 +57,13 @@ export default async function EventsPage() {
                       <span className="text-slate-700 dark:text-slate-300 font-medium">{count}</span>
                     </td>
                     <td className="px-4 py-4">
-                      <EventStatusSelect eventId={event.event_id} status={event.status} />
+                      <span className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full ${STATUS_BADGE[event.status] ?? STATUS_BADGE.draft}`}>
+                        {event.status}
+                      </span>
                     </td>
                     <td className="px-4 py-4 text-right">
                       <Link
-                        href={`/admin/events/${event.event_id}`}
+                        href={`/coordinator/events/${event.event_id}`}
                         className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium"
                       >
                         Manage →

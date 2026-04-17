@@ -129,6 +129,22 @@ export async function submitScores(judgeEmail: string, participantId: string): P
   if (updates.length > 0) await batchUpdateRows(SHEET_NAMES.SCORES, updates)
 }
 
+export async function getSubmissionStatusByParticipants(
+  participantIds: string[]
+): Promise<Map<string, Set<string>>> {
+  const rows = await readSheet(SHEET_NAMES.SCORES)
+  const ids = new Set(participantIds)
+  const result = new Map<string, Set<string>>()
+  for (const row of rows) {
+    const score = rowToScore(row)
+    if (!score.is_draft && ids.has(score.participant_id)) {
+      if (!result.has(score.participant_id)) result.set(score.participant_id, new Set())
+      result.get(score.participant_id)!.add(score.judge_email.toLowerCase())
+    }
+  }
+  return result
+}
+
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   const [rows, criteria, participants] = await Promise.all([
     readSheet(SHEET_NAMES.SCORES),
