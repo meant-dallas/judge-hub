@@ -2,8 +2,15 @@
 // Both Drizzle adapters expose the same .select()/.insert()/.update()/.delete() API,
 // so query files can be written once and work for both.
 
-const url = process.env.DATABASE_URL ?? 'file:./local.db'
-const isSQLite = url.startsWith('file:')
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const path = require('path')
+
+const rawUrl = process.env.DATABASE_URL ?? 'file:./local.db'
+const isSQLite = rawUrl.startsWith('file:')
+// Resolve SQLite path to absolute so it works regardless of Turbopack worker CWD
+const url = isSQLite
+  ? 'file:' + path.resolve(process.cwd(), rawUrl.replace(/^file:/, ''))
+  : rawUrl
 
 // Prevent multiple connections during Next.js hot reload
 const g = globalThis as unknown as { _db?: unknown; _tables?: unknown }

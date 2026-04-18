@@ -70,7 +70,7 @@ export async function upsertScores(
         score:          data.score,
         comments:       data.comments,
         submitted_at:   now,
-        is_draft:       data.is_draft,
+        is_draft:       data.is_draft ? 1 : 0,
       })
     }
   }

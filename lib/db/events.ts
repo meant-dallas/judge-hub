@@ -42,10 +42,10 @@ export async function createEvent(data: Omit<Event, 'created_at'>): Promise<Even
     active_participant_id: data.active_participant_id,
     time_limit_minutes:   data.time_limit_minutes,
     overtime_deduction:   data.overtime_deduction,
-    normalize_scores:     data.normalize_scores,
+    normalize_scores:     data.normalize_scores ? 1 : 0,
   }
   await db.insert(tables.events).values(row)
-  return { ...row }
+  return { ...row, normalize_scores: data.normalize_scores }
 }
 
 export async function updateEventStatus(eventId: string, status: Event['status']): Promise<void> {

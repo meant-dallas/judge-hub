@@ -51,10 +51,10 @@ export async function createParticipant(data: Omit<Participant, 'created_at'>): 
     status:         data.status,
     created_at:     now,
     event_id:       data.event_id,
-    overtime:       data.overtime,
+    overtime:       data.overtime ? 1 : 0,
   }
   await db.insert(tables.participants).values(row)
-  return { ...row }
+  return { ...row, overtime: data.overtime }
 }
 
 export async function updateParticipantStatus(

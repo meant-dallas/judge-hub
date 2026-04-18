@@ -211,7 +211,7 @@ This phase adds an optional time-limit configuration at the event level and a pe
 - [x] Implement role-based access control (RBAC)
 - [ ] Create notification system (email or in-app)
 - [x] Implement score normalization (per-judge z-score, toggled per event in Criteria tab)
-- [ ] Create leaderboard/results view
+- [x] Create leaderboard/results view
 - [ ] Add search and filter functionality
 - [ ] Implement pagination for large datasets
 

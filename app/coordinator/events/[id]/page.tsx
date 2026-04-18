@@ -16,6 +16,8 @@ import EventTabNav from '@/components/shared/EventTabNav'
 import EventJudgesTab from '@/components/admin/EventJudgesTab'
 import ParticipantProgressRow from '@/components/coordinator/ParticipantProgressRow'
 import SessionControls from '@/components/coordinator/SessionControls'
+import EventLeaderboard from '@/components/shared/EventLeaderboard'
+import { getLeaderboardForEvent } from '@/lib/db/scores'
 
 const STATUS_BADGE: Record<string, string> = {
   draft: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
@@ -67,6 +69,22 @@ export default async function CoordinatorEventDetailPage({
     (s, p) => s + (submissionStatus.get(p.participant_id)?.size ?? 0),
     0
   )
+
+  // Leaderboard (only when on results tab)
+  const leaderboardRaw = tab === 'results' ? await getLeaderboardForEvent(event.event_id, event.normalize_scores) : []
+  const participantMap = new Map(participants.map((p) => [p.participant_id, p]))
+  const leaderboard = leaderboardRaw.map((entry) => {
+    const p = participantMap.get(entry.participant_id)
+    const overtime = p?.overtime ?? false
+    const deduction = overtime && !event.normalize_scores ? event.overtime_deduction : 0
+    return {
+      ...entry,
+      team_name: p?.team_name ?? '',
+      category: p?.category ?? '',
+      overtime,
+      adjusted_score: entry.weighted_score - deduction,
+    }
+  })
 
   // Live session data
   const isLive = event.active_participant_id !== ''
@@ -125,7 +143,7 @@ export default async function CoordinatorEventDetailPage({
       )}
 
       {/* Tabs */}
-      <EventTabNav basePath={basePath} activeTab={tab} />
+      <EventTabNav basePath={basePath} activeTab={tab} showResults={event.status === 'completed'} />
 
       {/* Participants tab */}
       {tab !== 'criteria' && tab !== 'judges' && (
@@ -248,6 +266,31 @@ export default async function CoordinatorEventDetailPage({
               </div>
             </div>
           )}
+        </section>
+      )}
+
+      {/* Results tab */}
+      {tab === 'results' && event.status !== 'completed' && (
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700/60 py-16 text-center">
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Results are available once the event is marked as Complete.</p>
+          <p className="text-slate-300 dark:text-slate-600 text-xs mt-1">Current status: <span className="capitalize">{event.status}</span></p>
+        </div>
+      )}
+      {tab === 'results' && event.status === 'completed' && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              Results
+              <span className="ml-2 text-xs font-normal text-slate-400 dark:text-slate-500">{leaderboard.length} ranked</span>
+            </h2>
+          </div>
+          <EventLeaderboard
+            entries={leaderboard}
+            totalJudges={assignedJudgeEmails.length}
+            normalize={event.normalize_scores}
+            timeLimitMinutes={event.time_limit_minutes}
+            overtimeDeduction={event.overtime_deduction}
+          />
         </section>
       )}
 
