@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { db, tables } from './index'
 import type { Event } from '@/types/sheets'
 
@@ -55,14 +55,14 @@ export async function updateEventStatus(eventId: string, status: Event['status']
 export async function updateActiveParticipant(eventId: string, participantId: string): Promise<void> {
   await db
     .update(tables.events)
-    .set({ active_participant_id: participantId })
+    .set({ active_participant_id: sql`${participantId}` })
     .where(eq(tables.events.event_id, eventId))
 }
 
 export async function updateEventNormalization(eventId: string, normalize: boolean): Promise<void> {
   await db
     .update(tables.events)
-    .set({ normalize_scores: normalize })
+    .set({ normalize_scores: sql`${normalize ? 1 : 0}` })
     .where(eq(tables.events.event_id, eventId))
 }
 
@@ -73,6 +73,6 @@ export async function updateEventTimeLimit(
 ): Promise<void> {
   await db
     .update(tables.events)
-    .set({ time_limit_minutes: timeLimitMinutes, overtime_deduction: overtimeDeduction })
+    .set({ time_limit_minutes: sql`${timeLimitMinutes}`, overtime_deduction: sql`${overtimeDeduction}` })
     .where(eq(tables.events.event_id, eventId))
 }

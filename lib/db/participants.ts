@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { db, tables } from './index'
 import type { Participant } from '@/types/sheets'
 
@@ -73,6 +73,6 @@ export async function updateParticipantOvertime(
 ): Promise<void> {
   await db
     .update(tables.participants)
-    .set({ overtime })
+    .set({ overtime: sql`${overtime ? 1 : 0}` })
     .where(eq(tables.participants.participant_id, participantId))
 }

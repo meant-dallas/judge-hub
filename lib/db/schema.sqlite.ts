@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core'
+import { sql } from 'drizzle-orm'
 
 export const users = sqliteTable('users', {
   email:      text('email').primaryKey(),
@@ -20,7 +21,7 @@ export const events = sqliteTable('events', {
   active_participant_id: text('active_participant_id').notNull().default(''),
   time_limit_minutes:   integer('time_limit_minutes').notNull().default(0),
   overtime_deduction:   integer('overtime_deduction').notNull().default(0),
-  normalize_scores:     integer('normalize_scores', { mode: 'boolean' }).notNull().default(false),
+  normalize_scores:     integer('normalize_scores').notNull().default(sql`0`),
 })
 
 export const participants = sqliteTable('participants', {
@@ -33,7 +34,7 @@ export const participants = sqliteTable('participants', {
   status:         text('status').notNull().default('pending'),
   created_at:     text('created_at').notNull(),
   event_id:       text('event_id').notNull(),
-  overtime:       integer('overtime', { mode: 'boolean' }).notNull().default(false),
+  overtime:       integer('overtime').notNull().default(sql`0`),
 })
 
 export const criteria = sqliteTable('criteria', {
@@ -54,7 +55,7 @@ export const scores = sqliteTable('scores', {
   score:          real('score').notNull().default(0),
   comments:       text('comments').notNull().default(''),
   submitted_at:   text('submitted_at').notNull().default(''),
-  is_draft:       integer('is_draft', { mode: 'boolean' }).notNull().default(true),
+  is_draft:       integer('is_draft').notNull().default(sql`1`),
 })
 
 export const assignments = sqliteTable('assignments', {
