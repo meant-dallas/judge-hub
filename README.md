@@ -1,144 +1,121 @@
 # JudgeHub
 
-A Next.js judging application with Google OAuth authentication, role-based access control, and Google Sheets backend integration.
+A Next.js judging application with Google OAuth authentication, role-based access control, and a PostgreSQL backend (SQLite for local development).
 
 ## Overview
 
-JudgeHub is a web application designed to streamline the judging process for competitions and events. It features three distinct user personas (Admin, Coordinator, and Judge) with role-based access control, and uses Google Sheets as a backend for storing scores and evaluations.
+JudgeHub streamlines the judging process for competitions and events. It supports three user roles — Admin, Coordinator, and Judge — and organises work around **Events**, each with Participants, Criteria, and assigned Judges.
 
-## Features
+Key capabilities:
+- **Live judging sessions** — coordinators control which participant is currently presenting; judges score only the active participant
+- **Score normalization** — optional per-judge z-score normalization removes leniency/strictness bias from the final leaderboard
+- **Overtime deduction** — configurable time limit per event with an automatic point deduction for participants who run over
+- **Results leaderboard** — ranked view per event, available once an event is marked complete
 
-- **Google OAuth Authentication**: Secure login using Google accounts
-- **Role-Based Access Control**: Three user personas with different permissions
-  - **Admin**: Manage users, competitions, projects, and view all data
-  - **Coordinator**: Assign judges, track progress, and monitor submissions
-  - **Judge**: Evaluate assigned projects and submit scores
-- **Google Sheets Integration**: Backend storage for scores and data
-- **Responsive Design**: Works on desktop and mobile devices
-- **Real-time Updates**: Track judging progress in real-time
+## User Roles
+
+| Role | Can do |
+|------|--------|
+| **Admin** | Everything: manage users, create events, manage participants/criteria/judges, view results |
+| **Coordinator** | Manage participants, criteria, and judges within events; run live sessions; view results |
+| **Judge** | Score assigned participants; see only the currently presenting participant during live sessions |
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Authentication**: NextAuth.js
-- **Backend**: Google Sheets API
+- **Framework**: Next.js 16 (App Router, TypeScript)
+- **Styling**: Tailwind CSS v4
+- **Authentication**: NextAuth.js v5 with Google OAuth
+- **Database**: Drizzle ORM — SQLite (`better-sqlite3`) locally, Neon PostgreSQL in production
 - **Deployment**: Vercel
 
-## Getting Started
+## Local Development
 
 ### Prerequisites
 
-- Node.js 20.9.0 or higher
-- npm or yarn
-- Google Cloud Console account
-- Google Sheets account
+- Node.js 20+
+- A Google Cloud project with OAuth 2.0 credentials ([setup guide](docs/deployment.md#step-3--create-a-production-google-oauth-app))
 
-### Installation
+### Setup
 
-1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd judgehub
-```
-
-2. Install dependencies:
-```bash
+# 1. Install dependencies
 npm install
-```
 
-3. Set up environment variables:
-   - Copy `.env.example` to `.env.local`
-   - Fill in the required values (see Configuration section below)
+# 2. Copy env template and fill in values
+cp .env.example .env.local
 
-4. Run the development server:
-```bash
+# 3. Apply the schema to the local SQLite database
+npm run db:push
+
+# 4. Insert your first admin user
+sqlite3 local.db "INSERT INTO users (email, role, name, status, created_at, notes)
+  VALUES ('you@gmail.com', 'admin', 'Your Name', 'active', datetime('now'), '');"
+
+# 5. Start the dev server
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+Open [http://localhost:3000](http://localhost:3000) and sign in with the Google account you inserted above.
 
-## Configuration
+### Environment variables
 
-### Google OAuth Setup
+Copy `.env.example` to `.env.local` and set:
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable Google OAuth API
-4. Create OAuth 2.0 credentials
-5. Add authorized redirect URIs:
-   - Development: `http://localhost:3000/api/auth/callback/google`
-   - Production: `https://your-domain.com/api/auth/callback/google`
-6. Copy the Client ID and Client Secret to your `.env.local`
+| Variable | Description |
+|----------|-------------|
+| `NEXTAUTH_URL` | `http://localhost:3000` |
+| `NEXTAUTH_SECRET` | Any random string locally (`openssl rand -base64 32`) |
+| `GOOGLE_CLIENT_ID` | OAuth 2.0 client ID from Google Cloud Console |
+| `GOOGLE_CLIENT_SECRET` | OAuth 2.0 client secret |
+| `DATABASE_URL` | Omit (defaults to `file:./local.db`) or set explicitly |
 
-### Google Sheets API Setup
+### Database scripts
 
-1. In Google Cloud Console, enable Google Sheets API
-2. Create a service account
-3. Download the service account JSON key file
-4. Extract the `private_key` and `client_email` values
-5. Create a Google Sheet for your data
-6. Share the sheet with the service account email (with edit permissions)
-7. Copy the spreadsheet ID from the URL to your `.env.local`
-
-### Environment Variables
-
-See `.env.example` for all required environment variables.
+```bash
+npm run db:push    # Apply schema changes to the database
+npm run db:studio  # Open Drizzle Studio (visual DB browser)
+```
 
 ## Project Structure
 
 ```
 judgehub/
-├── app/                    # Next.js app router pages
-│   ├── api/               # API routes
-│   ├── admin/             # Admin dashboard pages
-│   ├── coordinator/       # Coordinator pages
-│   ├── judge/             # Judge pages
-│   ├── layout.tsx         # Root layout
-│   ├── page.tsx           # Home page
-│   └── globals.css        # Global styles
-├── components/            # Reusable React components
-├── lib/                   # Utility libraries and helpers
-├── types/                 # TypeScript type definitions
-├── utils/                 # Utility functions
-├── public/                # Static assets
-└── TASKS.md              # Development task list
+├── app/
+│   ├── admin/              # Admin dashboard (events, users)
+│   ├── coordinator/        # Coordinator dashboard
+│   ├── judge/              # Judge scoring interface
+│   └── api/                # API routes + server actions
+├── components/
+│   ├── admin/              # Admin-specific components
+│   ├── coordinator/        # Coordinator-specific components
+│   ├── shared/             # Shared components (EventTabNav, EventLeaderboard, …)
+│   └── judge/              # Judge scoring form
+├── lib/
+│   ├── db/                 # Drizzle ORM — schema, queries, db client
+│   └── auth.ts             # NextAuth configuration
+├── types/                  # TypeScript interfaces
+├── docs/                   # Guides
+│   ├── deployment.md       # Vercel + Neon deployment walkthrough
+│   └── zscore-normalization.md  # Manual test cases for score normalization
+└── TASKS.md                # Development roadmap
 ```
-
-## Development
-
-### Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run format` - Format code with Prettier
-
-### Code Style
-
-This project uses ESLint and Prettier for code formatting. Configuration files:
-- `.eslintrc.json` - ESLint rules
-- `.prettierrc` - Prettier configuration
 
 ## Deployment
 
-### Deploy to Vercel
+See **[docs/deployment.md](docs/deployment.md)** for the full step-by-step guide covering:
+- Neon PostgreSQL setup
+- Production Google OAuth credentials
+- Vercel environment variables
+- Adding the first admin user
+- Schema migrations
 
-1. Push your code to GitHub
-2. Import the project in Vercel
-3. Configure environment variables in Vercel dashboard
-4. Deploy
+## Available Scripts
 
-### Environment Variables for Production
-
-Make sure to set all environment variables from `.env.example` in your Vercel project settings.
-
-## Contributing
-
-See `TASKS.md` for the current development roadmap and task list.
-
-## License
-
-MIT
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start development server (Turbopack) |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run db:push` | Push schema to database |
+| `npm run db:studio` | Open Drizzle Studio |
