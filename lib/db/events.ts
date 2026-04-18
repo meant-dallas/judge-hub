@@ -15,6 +15,7 @@ function mapEvent(r: any): Event {
     active_participant_id: r.active_participant_id ?? '',
     time_limit_minutes:   Number(r.time_limit_minutes ?? 0),
     overtime_deduction:   Number(r.overtime_deduction ?? 0),
+    normalize_scores:     Boolean(r.normalize_scores),
   }
 }
 
@@ -41,6 +42,7 @@ export async function createEvent(data: Omit<Event, 'created_at'>): Promise<Even
     active_participant_id: data.active_participant_id,
     time_limit_minutes:   data.time_limit_minutes,
     overtime_deduction:   data.overtime_deduction,
+    normalize_scores:     data.normalize_scores,
   }
   await db.insert(tables.events).values(row)
   return { ...row }
@@ -54,6 +56,13 @@ export async function updateActiveParticipant(eventId: string, participantId: st
   await db
     .update(tables.events)
     .set({ active_participant_id: participantId })
+    .where(eq(tables.events.event_id, eventId))
+}
+
+export async function updateEventNormalization(eventId: string, normalize: boolean): Promise<void> {
+  await db
+    .update(tables.events)
+    .set({ normalize_scores: normalize })
     .where(eq(tables.events.event_id, eventId))
 }
 

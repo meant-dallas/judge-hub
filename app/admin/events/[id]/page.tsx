@@ -11,6 +11,7 @@ import AddCriterionForm from '@/components/admin/AddCriterionForm'
 import DeleteCriterionButton from '@/components/admin/DeleteCriterionButton'
 import StandardTemplateButton from '@/components/admin/StandardTemplateButton'
 import TimeLimitCard from '@/components/admin/TimeLimitCard'
+import NormalizationToggle from '@/components/admin/NormalizationToggle'
 import EventStatusSelect from '@/components/admin/EventStatusSelect'
 import EventTabNav from '@/components/shared/EventTabNav'
 import EventJudgesTab from '@/components/admin/EventJudgesTab'
@@ -166,6 +167,11 @@ export default async function EventDetailPage({
             eventId={event.event_id}
             timeLimitMinutes={event.time_limit_minutes}
             overtimeDeduction={event.overtime_deduction}
+            readOnly={event.status === 'completed' || event.status === 'archived'}
+          />
+          <NormalizationToggle
+            eventId={event.event_id}
+            normalize={event.normalize_scores}
             readOnly={event.status === 'completed' || event.status === 'archived'}
           />
 

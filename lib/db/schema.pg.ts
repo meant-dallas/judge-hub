@@ -20,6 +20,7 @@ export const events = pgTable('events', {
   active_participant_id: text('active_participant_id').notNull().default(''),
   time_limit_minutes:   integer('time_limit_minutes').notNull().default(0),
   overtime_deduction:   integer('overtime_deduction').notNull().default(0),
+  normalize_scores:     boolean('normalize_scores').notNull().default(false),
 })
 
 export const participants = pgTable('participants', {

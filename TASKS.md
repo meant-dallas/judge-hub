@@ -208,10 +208,9 @@ This phase adds an optional time-limit configuration at the event level and a pe
 
 ## Phase 8: Core Features
 
-- [ ] Implement role-based access control (RBAC)
+- [x] Implement role-based access control (RBAC)
 - [ ] Create notification system (email or in-app)
-- [ ] Build conflict of interest handling
-- [ ] Implement score normalization/calibration
+- [x] Implement score normalization (per-judge z-score, toggled per event in Criteria tab)
 - [ ] Create leaderboard/results view
 - [ ] Add search and filter functionality
 - [ ] Implement pagination for large datasets

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/lib/auth'
-import { createEvent, updateEventStatus, updateActiveParticipant, updateEventTimeLimit, getEventById } from '@/lib/db/events'
+import { createEvent, updateEventStatus, updateActiveParticipant, updateEventTimeLimit, updateEventNormalization, getEventById } from '@/lib/db/events'
 import { createParticipant, updateParticipantStatus, updateParticipantOvertime, getParticipantsByEvent } from '@/lib/db/participants'
 import { createCriterion, deleteCriterion, getCriteriaByEvent } from '@/lib/db/criteria'
 import { upsertUser, setUserStatus } from '@/lib/db/users'
@@ -38,6 +38,7 @@ export async function createEventAction(formData: FormData): Promise<{ error?: s
     active_participant_id: '',
     time_limit_minutes: 0,
     overtime_deduction: 0,
+    normalize_scores: false,
   })
 
   revalidatePath('/admin/events')
@@ -152,6 +153,20 @@ export async function endSessionAction(eventId: string): Promise<{ error?: strin
 }
 
 // ─── Overtime ─────────────────────────────────────────────────────────────────
+
+export async function updateEventNormalizationAction(
+  eventId: string,
+  normalize: boolean
+): Promise<{ error?: string }> {
+  const session = await auth()
+  if (!session?.user || !['admin', 'coordinator'].includes(session.user.role)) {
+    return { error: 'Forbidden' }
+  }
+  await updateEventNormalization(eventId, normalize)
+  revalidatePath(`/admin/events/${eventId}`)
+  revalidatePath(`/coordinator/events/${eventId}`)
+  return {}
+}
 
 export async function updateEventTimeLimitAction(
   eventId: string,

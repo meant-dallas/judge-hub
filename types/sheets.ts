@@ -43,6 +43,7 @@ export interface Event {
   active_participant_id: string  // '' when no live session
   time_limit_minutes: number    // 0 = no time limit
   overtime_deduction: number    // flat pts deducted when participant marked overtime
+  normalize_scores: boolean     // apply per-judge z-score normalization on leaderboard
 }
 
 export interface Score {
@@ -123,6 +124,7 @@ export function rowToEvent(row: string[]): Event {
     active_participant_id: row[7] ?? '',
     time_limit_minutes: parseFloat(row[8] ?? '0') || 0,
     overtime_deduction: parseFloat(row[9] ?? '0') || 0,
+    normalize_scores:   row[10] === 'true' || row[10] === 'TRUE' || row[10] === '1',
   }
 }
 
