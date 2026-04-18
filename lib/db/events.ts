@@ -42,7 +42,7 @@ export async function createEvent(data: Omit<Event, 'created_at'>): Promise<Even
     active_participant_id: data.active_participant_id,
     time_limit_minutes:   data.time_limit_minutes,
     overtime_deduction:   data.overtime_deduction,
-    normalize_scores:     data.normalize_scores ? 1 : 0,
+    normalize_scores:     data.normalize_scores ? sql`true` : sql`false`,
   }
   await db.insert(tables.events).values(row)
   return { ...row, normalize_scores: data.normalize_scores }
@@ -62,7 +62,7 @@ export async function updateActiveParticipant(eventId: string, participantId: st
 export async function updateEventNormalization(eventId: string, normalize: boolean): Promise<void> {
   await db
     .update(tables.events)
-    .set({ normalize_scores: sql`${normalize ? 1 : 0}` })
+    .set({ normalize_scores: normalize ? sql`true` : sql`false` })
     .where(eq(tables.events.event_id, eventId))
 }
 

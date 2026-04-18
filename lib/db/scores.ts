@@ -59,7 +59,7 @@ export async function upsertScores(
     if (existing.length > 0) {
       await db
         .update(tables.scores)
-        .set({ score: data.score, comments: data.comments, submitted_at: now, is_draft: sql`${data.is_draft ? 1 : 0}` })
+        .set({ score: data.score, comments: data.comments, submitted_at: now, is_draft: data.is_draft ? sql`true` : sql`false` })
         .where(eq(tables.scores.score_id, existing[0].score_id))
     } else {
       await db.insert(tables.scores).values({
@@ -70,7 +70,7 @@ export async function upsertScores(
         score:          data.score,
         comments:       data.comments,
         submitted_at:   now,
-        is_draft:       data.is_draft ? 1 : 0,
+        is_draft:       data.is_draft ? sql`true` : sql`false`,
       })
     }
   }
@@ -80,12 +80,12 @@ export async function submitScores(judgeEmail: string, participantId: string): P
   const now = new Date().toISOString()
   await db
     .update(tables.scores)
-    .set({ is_draft: sql`${0}`, submitted_at: now })
+    .set({ is_draft: sql`false`, submitted_at: now })
     .where(
       and(
         eq(tables.scores.judge_email, judgeEmail.toLowerCase()),
         eq(tables.scores.participant_id, participantId),
-        eq(tables.scores.is_draft, sql`1`)
+        eq(tables.scores.is_draft, sql`true`)
       )
     )
 }
@@ -101,7 +101,7 @@ export async function getSubmissionStatusByParticipants(
     .where(
       and(
         inArray(tables.scores.participant_id, participantIds),
-        eq(tables.scores.is_draft, sql`0`)
+        eq(tables.scores.is_draft, sql`false`)
       )
     )
 
@@ -117,7 +117,7 @@ export async function getSubmissionStatusByParticipants(
 
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   const [rows, criteria, participants] = await Promise.all([
-    db.select().from(tables.scores).where(eq(tables.scores.is_draft, sql`0`)),
+    db.select().from(tables.scores).where(eq(tables.scores.is_draft, sql`false`)),
     getAllCriteria(),
     getAllParticipants(),
   ])
@@ -173,7 +173,7 @@ export async function getLeaderboardForEvent(
     .where(
       and(
         inArray(tables.scores.participant_id, participantIds),
-        eq(tables.scores.is_draft, sql`0`)
+        eq(tables.scores.is_draft, sql`false`)
       )
     )
 

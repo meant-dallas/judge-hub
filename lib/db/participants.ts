@@ -51,7 +51,7 @@ export async function createParticipant(data: Omit<Participant, 'created_at'>): 
     status:         data.status,
     created_at:     now,
     event_id:       data.event_id,
-    overtime:       data.overtime ? 1 : 0,
+    overtime:       data.overtime ? sql`true` : sql`false`,
   }
   await db.insert(tables.participants).values(row)
   return { ...row, overtime: data.overtime }
@@ -73,6 +73,6 @@ export async function updateParticipantOvertime(
 ): Promise<void> {
   await db
     .update(tables.participants)
-    .set({ overtime: sql`${overtime ? 1 : 0}` })
+    .set({ overtime: overtime ? sql`true` : sql`false` })
     .where(eq(tables.participants.participant_id, participantId))
 }
