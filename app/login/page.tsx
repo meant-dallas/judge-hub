@@ -1,6 +1,7 @@
 import { auth, signIn } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 
 const ROLE_DASHBOARDS: Record<string, string> = {
   admin: '/admin',
@@ -86,9 +87,9 @@ export default async function LoginPage({
           © {new Date().getFullYear()} Malayalee Engineers&apos; Association of North Texas
         </p>
         <p className="flex items-center justify-center gap-2 text-xs text-slate-400">
-          <a href="#" className="hover:text-slate-600 transition-colors">Privacy Policy</a>
+          <Link href="/privacy" className="hover:text-slate-600 transition-colors">Privacy Policy</Link>
           <span aria-hidden="true">·</span>
-          <a href="#" className="hover:text-slate-600 transition-colors">Terms of Service</a>
+          <Link href="/terms" className="hover:text-slate-600 transition-colors">Terms of Service</Link>
         </p>
       </footer>
 
